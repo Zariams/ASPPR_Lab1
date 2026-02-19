@@ -1,15 +1,20 @@
 ﻿using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using ASPPR_Lab1.ASPPR_Lab1;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ASPPR_Lab1
 {
-    internal class Program
+    internal partial class Program
     {
 
 
         static void Main(string[] args)
         {
+            var fileDirectory = Directory.GetCurrentDirectory();
+            Console.OutputEncoding = Encoding.UTF8;
+
             var A = new List<List<double>>()
             {
                 new List<double>() {3, 1, 1 },
@@ -36,16 +41,18 @@ namespace ASPPR_Lab1
             //    new List<double>() {6},
             //    new List<double>() {6},
             //};
-
-            var res1 = LinearAlgebraicEquationSolver.SolveFirstMethod(new Matrix(A), new Matrix(B));
-            Console.WriteLine($"First method:\n{res1}");
-
-            var res2 = LinearAlgebraicEquationSolver.SolveSecondMethod(new Matrix(A), new Matrix(B));
-            Console.WriteLine($"Second method:\n{res2}");
-
-            var res3 = LinearAlgebraicEquationSolver.SolveGauss(new Matrix(A), new Matrix(B));
-            Console.WriteLine($"Third method:\n{res3}");
-
+            var compiler = new ComputationReport();
+            var res1 = LinearAlgebraicEquationSolver.SolveFirstMethod(new Matrix(A), new Matrix(B), compiler);
+            Console.WriteLine($"First method:\n{compiler.Compile()}");
+            File.WriteAllText($"{fileDirectory}\\First.md", compiler.Compile());
+            compiler.Flush();
+            var res2 = LinearAlgebraicEquationSolver.SolveSecondMethod(new Matrix(A), new Matrix(B), compiler);
+            Console.WriteLine($"Second method:\n{compiler.Compile()}");
+            File.WriteAllText($"{fileDirectory}\\Second.md", compiler.Compile());
+            compiler.Flush();
+            var res3 = LinearAlgebraicEquationSolver.SolveGauss(new Matrix(A), new Matrix(B), compiler);
+            Console.WriteLine($"Third method:\n{compiler.Compile()}");
+            File.WriteAllText($"{fileDirectory}\\Gauss.md", compiler.Compile());
             TestMatricesInversion();
             TestMatricesRankCalculation();
         }

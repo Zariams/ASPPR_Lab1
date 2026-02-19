@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using static ASPPR_Lab1.Program;
 
 namespace ASPPR_Lab1
 {
@@ -36,6 +37,10 @@ namespace ASPPR_Lab1
                 set => _data[r] = value;
             }
 
+            public List<List<double>> Rows
+            {
+                get => _data;
+            }
             public int Rank
             {
                 get {
@@ -121,16 +126,19 @@ namespace ASPPR_Lab1
                 return resultMatrix;
             }
             
-            public Matrix Invert()
+            public Matrix Invert(IComputationReportCompiler? compiler = null)
             {
                 var inputMatrix = this.DeepCopy();
+                compiler?.AddMatrix("Вхідна матриця", inputMatrix,1);
                 var rowCount = inputMatrix.RowCount;
                 for (int i = 0; i < rowCount; i++)
                 {
+                    compiler?.AddStep(i + 1, $"Розв'язувальний елемент A[{i + 1},{i + 1}] = {Math.Round(inputMatrix[i, i],3)}");
                     if (inputMatrix[i, i] == 0) continue;
                     inputMatrix = inputMatrix.JordanExclude(i, i);
+                    compiler?.AddMatrix("Матриця після виконання ЗЖВ:", inputMatrix);
                 }
-
+                compiler?.AddMatrix("Обернена матриця", inputMatrix,1);
                 return inputMatrix;
             }
 
