@@ -14,146 +14,140 @@ namespace ASPPR_Lab1
         {
             var fileDirectory = Directory.GetCurrentDirectory();
             Console.OutputEncoding = Encoding.UTF8;
-
-            var A = new List<List<double>>()
-            {
-                new List<double>() {3, 1, 1 },
-                new List<double>() {2, -2, 1 },
-                new List<double>() {-1, -3, -2 },
-            };
-
-            var B = new List<List<double>>()
-            {
-                new List<double>() {1},
-                new List<double>() {3},
-                new List<double>() {4},
-            };
-            //var A = new List<List<double>>()
-            //{
-            //    new List<double>() {6, 2, 5 },
-            //    new List<double>() {-3, 4, -1 },
-            //    new List<double>() {1, 4, 3 },
-            //};
-
-            //var B = new List<List<double>>()
-            //{
-            //    new List<double>() {1},
-            //    new List<double>() {6},
-            //    new List<double>() {6},
-            //};
-            var compiler = new ComputationReport();
-            var res1 = LinearAlgebraicEquationSolver.SolveFirstMethod(new Matrix(A), new Matrix(B), compiler);
-            Console.WriteLine($"First method:\n{compiler.Compile()}");
-            File.WriteAllText($"{fileDirectory}\\First.md", compiler.Compile());
-            compiler.Flush();
-            var res2 = LinearAlgebraicEquationSolver.SolveSecondMethod(new Matrix(A), new Matrix(B), compiler);
-            Console.WriteLine($"Second method:\n{compiler.Compile()}");
-            File.WriteAllText($"{fileDirectory}\\Second.md", compiler.Compile());
-            compiler.Flush();
-            var res3 = LinearAlgebraicEquationSolver.SolveGauss(new Matrix(A), new Matrix(B), compiler);
-            Console.WriteLine($"Third method:\n{compiler.Compile()}");
-            File.WriteAllText($"{fileDirectory}\\Gauss.md", compiler.Compile());
-            TestMatricesInversion();
-            TestMatricesRankCalculation();
+            RunMenu();
         }
 
-        static void TestMatricesRankCalculation()
+        static void RunMenu()
         {
-            var testMatrices = new List<List<List<double>>>()
+            var iterate = true;
+            while (iterate)
             {
-                new List<List<double>>()
+                Console.WriteLine(
+               """
+                Що ви хочете зробити?
+                1. Розрахувати ранг матриці;
+                2. Отримати обернену матрицю;
+                3. Розв'язати систему алгебраїчних лінійних рівнянь;
+                0. Вихід.
+                """
+               );
+                var choice = InputNumber();
+                var compiler = new ComputationReport();
+                switch (choice)
                 {
-                    new List<double>() {1, 2, 3, 4 },
-                    new List<double>() {2, 4, 6, 8 },
-                },
-                new List<List<double>>()
-                {
-                    new List<double>() {1, 2},
-                    new List<double>() {3, 6},
-                    new List<double>() {5, 10},
-                    new List<double>() {4, 8 },
-                },
-                new List<List<double>>()
-                {
-                    new List<double>() {6, 2, 5 },
-                    new List<double>() {-3, 4, -1 },
-                    new List<double>() {1, 4, 3 },
-                },
-                new List<List<double>>()
-                {
-                    new List<double>() {2, 5, 4 },
-                    new List<double>() {-3, 1, -2 },
-                    new List<double>() {-1, 6, 2 },
-                },
-                new List<List<double>>()
-                {
-                    new List<double>() {1, 2, 3, 4 },
-                    new List<double>() {-2, 5, -1,3 },
-                    new List<double>() {2, 4, 6, 8 },
-                    new List<double>() {-1, 9, 2, 7 },
-                },
-                new List<List<double>>()
-                {
-                    new List<double>() {1, 2, 3, 4 },
-                    new List<double>() {-2, 5, -1,3 },
-                    new List<double>() {2, 4, 7, 8 },
-                    new List<double>() {-1, 9, 2, 7 },
-                },
+                    case 0: 
+                        iterate = false; 
+                        break;
+                    case 1:
+                        {
+                            var matrix = InputMatrix();
+                            var rank = matrix.Rank;
+                            Console.WriteLine($"Ранг матриці: {matrix.Rank}");
+                            break;
+                        }
+                        
+                    case 2:
+                        {
+                            var matrix = InputMatrix();
+                            var inverse = matrix.Invert(compiler);
+                            Console.WriteLine($"Обернена матриця: {inverse}");
+                            Console.WriteLine("Показати деталі розрахунків?");
+                            var showcompiler = InputBool();
+                            if (showcompiler) Console.WriteLine(compiler.Compile());
+                            break;
+                        }
+                    case 3:
+                        {
+                            var A = InputMatrix();
+                            var B = InputMatrix(A.RowCount,1);
+                            var first = LinearAlgebraicEquationSolver.SolveFirstMethod(A, B, compiler);
+                            var second = LinearAlgebraicEquationSolver.SolveSecondMethod(A, B, compiler);
+                            var gauss = LinearAlgebraicEquationSolver.SolveGauss(A, B, compiler);
+                            Console.WriteLine($"Результат за першим способом: {first}");
+                            Console.WriteLine($"Результат за другим способом: {second}");
+                            Console.WriteLine($"Результат за третім способом: {gauss}");
+                            Console.WriteLine("Показати деталі розрахунків?");
+                            var showcompiler = InputBool();
+                            if (showcompiler) Console.WriteLine(compiler.Compile());
+                            break;
+                        }
+                }
 
-            };
-
-            int i = 0;
-            foreach (var matrix in testMatrices.Select(m => new Matrix(m)))
-            {
-                i++;
-                Console.WriteLine($"Test {i}");
-                Console.WriteLine(new string('-', 50));
-                Console.WriteLine($"Init matrix:\n {matrix}");
-                Console.WriteLine($"Rank: {matrix.Rank}");
             }
+           
+            
         }
-
-        static void TestMatricesInversion()
+        static Matrix InputMatrix()
         {
-            var testMatrices = new List<List<List<double>>>()
+            Console.Write("\nВведіть кількість рядків: ");
+            var rows = InputNumber();
+            Console.Write("\nВведіть кількість стовпців: ");
+            var cols = InputNumber();
+            
+            return InputMatrix(rows,cols);
+        }
+        static Matrix InputMatrix(int rows, int cols)
+        {
+            Console.Write($"Введіть елементи матриці {rows}x{cols}. Елементи одного рядка вводити через кому, новий рядок з Enter: ");
+            var result = new List<List<double>>();
+            for (int i = 0; i < rows; i++)
             {
-                new List<List<double>>()
-                {
-                    new List<double>() {3, 1, 1 },
-                    new List<double>() {2, -2, 1 },
-                    new List<double>() {-1, -3, -2 },
-                },
-                new List<List<double>>()
-                {
-                    new List<double>() {5, -3, 7 },
-                    new List<double>() {-1, 4, 3 },
-                    new List<double>() {6, -2, 5 },
-                },
-                new List<List<double>>()
-                {
-                    new List<double>() {6, 2, 5 },
-                    new List<double>() {-3, 4, -1 },
-                    new List<double>() {1, 4, 3 },
-                },
-                new List<List<double>>()
-                {
-                    new List<double>() {2, -1, 3 },
-                    new List<double>() {-1, 2, 2 },
-                    new List<double>() {1, 1, 1 },
-                },
-            };
-            int i = 0;
-            foreach (var matrix in testMatrices.Select(m => new Matrix(m)))
-            {
-                i++;
-                Console.WriteLine($"Test {i}");
-                Console.WriteLine(new string('-', 50));
-                Console.WriteLine($"Init matrix:\n {matrix}");
-                var resultMatrix = matrix.Invert();
-                Console.WriteLine($"Inverted matrix:\n {resultMatrix}");
+                var row = InputRow(cols);
+                result.Add(row);
             }
+            return new Matrix(result);
+        }
+        public static List<double> InputRow(int cols)
+        {
+            
+            var result = new List<double>();
+            var success = true;
+            do
+            {
+                var str = Console.ReadLine();
+                var numbers = str.Split(',').Select(n => n.Trim());
+                if (numbers.Count() != cols)
+                {
+                    Console.WriteLine("Некоректна кількість елементів у рядку");
+                    continue;
+                }
+                foreach (var number in numbers)
+                {
+                    double num;
+                    success = double.TryParse(number, out num);
+                    if (!success) break;
+                    result.Add(num);
+                }
+                if (!success)
+                {
+                    Console.WriteLine("Некоректний формат.");
+                    result = new List<double>();
+                }
+            } while (!success);
+
+            return result;
+            
         }
 
-
+        static int InputNumber()
+        {
+            var success = false;
+            int num;
+            do
+            {
+                var str = Console.ReadLine();
+                success = int.TryParse(str, out num);
+                if (!success) Console.WriteLine("Некоректний формат!");
+            } while (!success);
+            return num;
+        }
+    
+        static bool InputBool()
+        {
+            Console.Write("(Y/N)");
+            var ans = Console.ReadLine();
+            if (ans.ToLowerInvariant().FirstOrDefault() != 'y') return false;
+            return true;
+        }
     }
 }
