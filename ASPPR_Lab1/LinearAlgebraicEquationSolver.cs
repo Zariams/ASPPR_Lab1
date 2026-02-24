@@ -24,7 +24,7 @@ namespace ASPPR_Lab1
             }
             public static Matrix SolveSecondMethod(Matrix A, Matrix B, IComputationReportCompiler? compiler = null)
             {
-                compiler?.AddAction("Згенерований протокол обчислення", "Знаходження ров'язків СЛАР 1-м методом (за допомогою оберненої матриці)", 4);
+                compiler?.AddAction("Згенерований протокол обчислення", "Знаходження ров'язків СЛАР 2-м методом (з викресленими стовпцями)", 4);
                 compiler?.AddMatrix("Вхідна матриця А", A, 1);
                 compiler?.AddMatrix("Вхідна матриця B", B, 1);
                 compiler?.AddAction("Протокол обчислення", titleLevel: 3);
@@ -55,7 +55,7 @@ namespace ASPPR_Lab1
             }
             public static Matrix SolveGauss(Matrix A, Matrix B, IComputationReportCompiler? compiler = null)
             {
-                compiler?.AddAction("Згенерований протокол обчислення", "Знаходження ров'язків СЛАР 1-м методом (за допомогою оберненої матриці)", 4);
+                compiler?.AddAction("Згенерований протокол обчислення", "Знаходження ров'язків СЛАР 3-м методом (метод Гауса)", 4);
                 compiler?.AddMatrix("Вхідна матриця А", A, 1);
                 compiler?.AddMatrix("Вхідна матриця B", B, 1);
                 compiler?.AddAction("Протокол обчислення", titleLevel: 3);

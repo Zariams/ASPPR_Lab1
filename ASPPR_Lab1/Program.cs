@@ -50,7 +50,7 @@ namespace ASPPR_Lab1
                         {
                             var matrix = InputMatrix();
                             var inverse = matrix.Invert(compiler);
-                            Console.WriteLine($"Обернена матриця: {inverse}");
+                            Console.WriteLine($"Обернена матриця:\n{inverse}");
                             Console.WriteLine("Показати деталі розрахунків?");
                             var showcompiler = InputBool();
                             if (showcompiler) Console.WriteLine(compiler.Compile());
@@ -63,9 +63,9 @@ namespace ASPPR_Lab1
                             var first = LinearAlgebraicEquationSolver.SolveFirstMethod(A, B, compiler);
                             var second = LinearAlgebraicEquationSolver.SolveSecondMethod(A, B, compiler);
                             var gauss = LinearAlgebraicEquationSolver.SolveGauss(A, B, compiler);
-                            Console.WriteLine($"Результат за першим способом: {first}");
-                            Console.WriteLine($"Результат за другим способом: {second}");
-                            Console.WriteLine($"Результат за третім способом: {gauss}");
+                            Console.WriteLine($"Результат за першим способом: \n{first}");
+                            Console.WriteLine($"Результат за другим способом: \n{second}");
+                            Console.WriteLine($"Результат за третім способом: \n{gauss}");
                             Console.WriteLine("Показати деталі розрахунків?");
                             var showcompiler = InputBool();
                             if (showcompiler) Console.WriteLine(compiler.Compile());
