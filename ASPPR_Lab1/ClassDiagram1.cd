@@ -10,7 +10,7 @@
   <Class Name="ASPPR_Lab1.ASPPR_Lab1.Matrix">
     <Position X="8.25" Y="1.75" Width="5" />
     <TypeIdentifier>
-      <HashCode>IAABAEAABAAAAEQEKAAAAAEAAAgIAAAAgAAAEAAAAgA=</HashCode>
+      <HashCode>IAABAEAABAAAAEQEKAAAAAEgAAgIAAAAgAAAEAAAAgA=</HashCode>
       <FileName>Matrix.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -24,14 +24,6 @@
   </Class>
   <Class Name="ASPPR_Lab1.ComputationReportItem">
     <Position X="8.25" Y="7" Width="5" />
-    <NestedTypes>
-      <Class Name="ASPPR_Lab1.ComputationReportItem.ComputationReport" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>ComputationReport.cs</NewMemberFileName>
-        </TypeIdentifier>
-        <Lollipop Position="0.2" />
-      </Class>
-    </NestedTypes>
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAEAAACAAAAAAAAAAAAAAAAAAAABAAAA=</HashCode>
       <FileName>ComputationReportItem.cs</FileName>
@@ -40,8 +32,35 @@
   </Class>
   <Class Name="ASPPR_Lab1.Program">
     <Position X="0.5" Y="3.5" Width="3" />
+    <NestedTypes>
+      <Enum Name="ASPPR_Lab1.Program.Sign" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Sign.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="ASPPR_Lab1.Program.GoalFunctionType" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>GoalFunctionType.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Class Name="ASPPR_Lab1.Program.GoalFunction" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>GoalFunction.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="ASPPR_Lab1.Program.Inequality" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Inequality.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="ASPPR_Lab1.Program.InequalitySystem" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>InequalitySystem.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
     <TypeIdentifier>
-      <HashCode>AAIABAAAAAAEAAAAAAABAAAAAAAAAAAAAAAABAABAAA=</HashCode>
+      <HashCode>AAMCBAAAAAAEAAAAAABBAAAAAAAAAAAAAAAgBAABAAA=</HashCode>
       <FileName>Program.cs</FileName>
     </TypeIdentifier>
   </Class>

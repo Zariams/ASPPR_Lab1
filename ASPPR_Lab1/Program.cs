@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using ASPPR_Lab1.ASPPR_Lab1;
+using ASPPR_Lab2.Classes.Static;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ASPPR_Lab1
@@ -28,6 +29,7 @@ namespace ASPPR_Lab1
                 1. Розрахувати ранг матриці;
                 2. Отримати обернену матрицю;
                 3. Розв'язати систему алгебраїчних лінійних рівнянь;
+                4. Розв'язати систему лінійних нерівностей;
                 0. Вихід.
                 """
                );
@@ -35,8 +37,8 @@ namespace ASPPR_Lab1
                 var compiler = new ComputationReport();
                 switch (choice)
                 {
-                    case 0: 
-                        iterate = false; 
+                    case 0:
+                        iterate = false;
                         break;
                     case 1:
                         {
@@ -45,7 +47,7 @@ namespace ASPPR_Lab1
                             Console.WriteLine($"Ранг матриці: {matrix.Rank}");
                             break;
                         }
-                        
+
                     case 2:
                         {
                             var matrix = InputMatrix();
@@ -59,7 +61,7 @@ namespace ASPPR_Lab1
                     case 3:
                         {
                             var A = InputMatrix();
-                            var B = InputMatrix(A.RowCount,1);
+                            var B = InputMatrix(A.RowCount, 1);
                             var first = LinearAlgebraicEquationSolver.SolveFirstMethod(A, B, compiler);
                             var second = LinearAlgebraicEquationSolver.SolveSecondMethod(A, B, compiler);
                             var gauss = LinearAlgebraicEquationSolver.SolveGauss(A, B, compiler);
@@ -71,11 +73,18 @@ namespace ASPPR_Lab1
                             if (showcompiler) Console.WriteLine(compiler.Compile());
                             break;
                         }
+                    case 4:
+                        {
+                            var A = InputInequalitySystem();
+                            var Z = InputGoalFunction(A.VariableCount);
+                            var result = LinearInequalitySolver.Solve(A, Z);
+                            break;
+                        }
                 }
 
             }
-           
-            
+
+
         }
         static Matrix InputMatrix()
         {
@@ -83,8 +92,8 @@ namespace ASPPR_Lab1
             var rows = InputNumber();
             Console.Write("\nВведіть кількість стовпців: ");
             var cols = InputNumber();
-            
-            return InputMatrix(rows,cols);
+
+            return InputMatrix(rows, cols);
         }
         static Matrix InputMatrix(int rows, int cols)
         {
@@ -99,7 +108,7 @@ namespace ASPPR_Lab1
         }
         public static List<double> InputRow(int cols)
         {
-            
+
             var result = new List<double>();
             var success = true;
             do
@@ -126,7 +135,7 @@ namespace ASPPR_Lab1
             } while (!success);
 
             return result;
-            
+
         }
 
         static int InputNumber()
@@ -141,13 +150,128 @@ namespace ASPPR_Lab1
             } while (!success);
             return num;
         }
-    
+
         static bool InputBool()
         {
             Console.Write("(Y/N)");
             var ans = Console.ReadLine();
             if (ans.ToLowerInvariant().FirstOrDefault() != 'y') return false;
             return true;
+        }
+
+
+        static Sign InputSign()
+        {
+            var success = false;
+            int num = 0;
+            Sign sign = Sign.None;
+            do
+            {
+                Console.WriteLine("""
+                    Введіть знак операції:
+                    1. - <=
+                    2. - >=
+                    3. - <
+                    4. - >
+                    """);
+                var str = Console.ReadLine();
+                success = int.TryParse(str, out num) && num > 0 && num < 5;
+
+            } while (!success);
+            return (Sign)num;
+        }
+        public static Inequality InputInequality(int cols)
+        {
+
+            var coefficients = new List<double>();
+            var success = true;
+            do
+            {
+                Console.WriteLine($"Введіть {cols} коефіцієнти змінних нерівності, через кому:");
+                var str = Console.ReadLine();
+                var numbers = str.Split(',').Select(n => n.Trim());
+                if (numbers.Count() != cols)
+                {
+                    Console.WriteLine("Некоректна кількість змінних");
+                    continue;
+                }
+                foreach (var number in numbers)
+                {
+                    double num;
+                    success = double.TryParse(number, out num);
+                    if (!success) break;
+                    coefficients.Add(num);
+                }
+                if (!success)
+                {
+                    Console.WriteLine("Некоректний формат.");
+                    coefficients = new List<double>();
+                }
+            } while (!success);
+
+            var sign = InputSign();
+            Console.WriteLine("Введіть константу (праву частину нерівності):");
+            var constant = InputNumber();
+
+            var result = new Inequality(coefficients, constant, sign);
+            return result;
+        }
+        static InequalitySystem InputInequalitySystem()
+        {
+            Console.Write("\nВведіть кількість змінних у системі: ");
+            var cols = InputNumber();
+            Console.Write("\nВведіть кількість нерівностей у системі: ");
+            var rows = InputNumber();   
+
+            return InputInequalitySystem(rows, cols);
+        }
+        static InequalitySystem InputInequalitySystem(int rows, int cols)
+        {
+            Console.WriteLine($"Для побудови системи, введіть {rows} нерівності:");
+            var result = new List<Inequality>();
+            for (int i = 0; i < rows; i++)
+            {
+                var row = InputInequality(cols);
+                result.Add(row);
+            }
+            return new InequalitySystem(result);
+        }
+        
+        static GoalFunction InputGoalFunction(int cols)
+        {
+            var coefficients = new List<double>();
+            var success = true;
+
+            Console.WriteLine("Введіть функцію мети.");
+            do
+            {
+                Console.WriteLine($"Введіть {cols} коефіцієнтів змінних нерівності, через кому:");
+                var str = Console.ReadLine();
+                var numbers = str.Split(',').Select(n => n.Trim());
+                if (numbers.Count() != cols)
+                {
+                    Console.WriteLine("Некоректна кількість змінних");
+                    continue;
+                }
+                foreach (var number in numbers)
+                {
+                    double num;
+                    success = double.TryParse(number, out num);
+                    if (!success) break;
+                    coefficients.Add(num);
+                }
+                if (!success)
+                {
+                    Console.WriteLine("Некоректний формат.");
+                    coefficients = new List<double>();
+                }
+            } while (!success);
+            
+            Console.WriteLine("Чи хочете ви максимізувати чи мінімізувати цільову функцію? (Y/N, Y - максимізувати)");
+            var maximize = InputBool();
+            var goalFunctionType = maximize ? GoalFunctionType.Maximize : GoalFunctionType.Minimize;
+            var result = new GoalFunction(coefficients, goalFunctionType);
+            return result;
         }
     }
 }

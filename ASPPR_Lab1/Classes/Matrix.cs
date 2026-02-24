@@ -11,7 +11,9 @@ namespace ASPPR_Lab1
 
             public int RowCount => _data.Count;
             public int ColCount => _data[0].Count;
-            public Matrix(int rows, int cols)
+            public List<string> RowMarkers { get; set; } = new List<string>();
+            public List<string> ColMarkers { get; set; } = new List<string>();
+            public Matrix(int rows, int cols, List<string>? rowMarkers = null, List<string>? colMarkers = null)
             {
                 var data = new List<List<double>>();
 
@@ -19,11 +21,58 @@ namespace ASPPR_Lab1
                     data.Add(new List<double>(Enumerable.Repeat(0d, cols)));
 
                 _data = data;
+                if (rowMarkers != null)
+                {
+                    if (rowMarkers.Count != rows)
+                        throw new ArgumentException("The number of row markers must match the number of rows in the matrix.");
+                    RowMarkers = rowMarkers;
+                }
+                else
+                {
+                    for (int i = 0; i < rows; i++)
+                        RowMarkers.Add($"y{i + 1}");
+                }
+                if (colMarkers != null)
+                {
+                    if (colMarkers.Count != cols)
+                        throw new ArgumentException("The number of column markers must match the number of columns in the matrix.");
+                    ColMarkers = colMarkers;
+                }
+                else
+                {
+                    for (int i = 0; i < cols; i++)
+                        ColMarkers.Add($"x{i + 1}");
+                }
             }
-            public Matrix(List<List<double>> data)
+            public Matrix(List<List<double>> data, List<string>? rowMarkers = null, List<string>? colMarkers = null)
             {
                 _data = data;
+                if (rowMarkers != null)
+                {
+                    if (rowMarkers.Count != data.Count)
+                        throw new ArgumentException("The number of row markers must match the number of rows in the matrix.");
+                    RowMarkers = rowMarkers;
+                }
+                else
+                {
+                    for (int i = 0; i < data.Count; i++)
+                        RowMarkers.Add($"y{i + 1}");
+                }
+
+                if (colMarkers != null)
+                {
+                    if (colMarkers.Count != data[0].Count)
+                        throw new ArgumentException("The number of column markers must match the number of columns in the matrix.");
+                    ColMarkers = colMarkers;
+                }
+                else
+                {
+                    for (int i = 0; i < data[0].Count; i++)
+                        ColMarkers.Add($"x{i + 1}");
+                }
             }
+
+           
 
             public double this[int r, int c]
             {
@@ -92,7 +141,7 @@ namespace ASPPR_Lab1
                 var rowCount = this.RowCount;
                 var colCount = this.ColCount;
                 var solutionElement = this[row, col];
-                var resultMatrix = new Matrix(rowCount, colCount);
+                var resultMatrix = new Matrix(rowCount, colCount, new List<string>(RowMarkers), new List<string>(ColMarkers));
 
 
                 //Step 1: set solution element to 1
@@ -123,9 +172,53 @@ namespace ASPPR_Lab1
                         resultMatrix[r, c] = (this[r, c] * this[row, col] - this[r, col] * this[row, c]) / solutionElement;
                     }
                 }
+
+                resultMatrix.RowMarkers[row] = ColMarkers[col];
+                resultMatrix.ColMarkers[col] = RowMarkers[row];
                 return resultMatrix;
             }
-            
+
+            public Matrix JordanExcludeModified(int row, int col)
+            {
+                var rowCount = this.RowCount;
+                var colCount = this.ColCount;
+                var solutionElement = this[row, col];
+                var resultMatrix = new Matrix(rowCount, colCount,new List<string>(RowMarkers), new List<string>(ColMarkers));
+
+
+                //Step 1: set solution element to 1
+                resultMatrix[row, col] = 1 / solutionElement;
+
+                //Step 2
+                for (int i = 0; i < colCount; i++)
+                {
+                    if (i == col) continue;
+                    resultMatrix[row, i] = this[row, i] / solutionElement; // modified compared to original jordan exclusion
+                }
+
+                //Step 3
+                for (int i = 0; i < rowCount; i++)
+                {
+                    if (i == row) continue;
+                    resultMatrix[i, col] = -this[i, col] / solutionElement; // modified compared to original jordan exclusion
+                }
+
+                //Step 4: all other elements are calculated according to the formula: bij = aij*ars - ais*arj
+
+                for (int r = 0; r < rowCount; r++)
+                {
+                    if (r == row) continue;
+                    for (int c = 0; c < colCount; c++)
+                    {
+                        if (c == col) continue;
+                        resultMatrix[r, c] = (this[r, c] * this[row, col] - this[r, col] * this[row, c]) / solutionElement;
+                    }
+                }
+                resultMatrix.RowMarkers[row] = ColMarkers[col];
+                resultMatrix.ColMarkers[col] = RowMarkers[row];
+                return resultMatrix;
+            }
+
             public Matrix Invert(IComputationReportCompiler? compiler = null)
             {
                 var inputMatrix = this.DeepCopy();
@@ -146,9 +239,35 @@ namespace ASPPR_Lab1
             {
                 _data[row].Add(value);
             }
+            public void AddRow(List<double> row, string? marker = null)
+            {
+                _data.Add(row);
+                if (marker != null)
+                    RowMarkers.Add(marker);
+                else
+                    RowMarkers.Add($"y{RowCount}");
+            }
             public void RemoveRow(int row)
             {
                 _data.RemoveAt(row);
+            }
+            public Matrix GetColumn(int col)
+            {
+                var result = new List<List<double>>();
+
+                foreach (var row in _data)
+                    result.Add(new List<double> { row[col] });
+
+                return new Matrix(result);
+            }
+            public List<double> GetColumnAsList(int col)
+            {
+                var result = new List<double>();
+
+                foreach (var row in _data)
+                    result.Add( row[col] );
+
+                return result;
             }
             public void RemoveColumn(int column)
             {
@@ -159,12 +278,7 @@ namespace ASPPR_Lab1
             }
             public Matrix TakeLastColumn()
             {
-                var result = new List<List<double>>();
-
-                foreach (var row in _data)
-                    result.Add(new List<double> { row.Last() });
-
-                return new Matrix(result);
+                return GetColumn(ColCount - 1);
             }
             
             public Matrix DeepCopy()
