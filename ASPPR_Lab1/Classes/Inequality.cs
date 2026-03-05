@@ -66,7 +66,7 @@ namespace ASPPR_Lab1
                 var coeff = _coefficients[i];
                 if (Math.Abs(coeff) <= Double.Epsilon) continue;
                 if (i > 0 && coeff > 0) str += "+";
-                str += $"({coeff})*x{i + 1} ";
+                str += $"{coeff}*x{i + 1} ";
             }
             str += Sign switch
             {
@@ -77,6 +77,30 @@ namespace ASPPR_Lab1
                 _ => throw new Exception("Invalid sign")
             };
             str += $"{_constant}";
+            return str;
+        }
+
+        public string ToStringWithZeroes()
+        {
+            var str = "";
+            for (int i = 0; i < _coefficients.Count; i++)
+            {
+                var coeff = _coefficients[i];
+                if (Math.Abs(coeff) <= Double.Epsilon) continue;
+                if (coeff >= 0) str += "+";
+                str += $"{coeff}*x{i + 1} ";
+            }
+            if (_constant >= 0) str += "+";
+            str += $"{_constant}";
+            str += Sign switch
+            {
+                Sign.LessOrEqual => " <= ",
+                Sign.GreaterOrEqual => " >= ",
+                Sign.LessStrict => " < ",
+                Sign.GreaterStrict => " > ",
+                _ => throw new Exception("Invalid sign")
+            };
+            str += "0";
             return str;
         }
     }

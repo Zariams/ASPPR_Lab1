@@ -22,5 +22,10 @@ namespace ASPPR_Lab1
             IsInfeasible = isInfeasible;
             SolutionMatrix = solutionMatrix;
         }
+
+        public override string ToString()
+        {
+            return $"X = ({string.Join("; ", SolutionCoefficients.Select((c, i) => $"{c}"))}) {(IsOptimal ? $"{GoalFunctionType}(Z) = {GoalFunctionValue}" : "")}";
+        }
     }
 }

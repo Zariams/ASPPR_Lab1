@@ -1,4 +1,5 @@
-﻿using ASPPR_Lab1.ASPPR_Lab1;
+﻿using System.ComponentModel.DataAnnotations;
+using ASPPR_Lab1.ASPPR_Lab1;
 
 namespace ASPPR_Lab1
 {
@@ -49,7 +50,7 @@ namespace ASPPR_Lab1
 
         public override string ToString()
         {
-            var str = "Цільова функція: ";
+            var str = "Z = ";
             for (int i = 0; i < _coefficients.Count; i++)
             {
                 var coeff = _coefficients[i];
@@ -57,6 +58,7 @@ namespace ASPPR_Lab1
                 if (i > 0 && coeff > 0) str += "+";
                 str += $"({coeff})*x{i + 1} ";
             }
+            str += $" -> {(Type == GoalFunctionType.Maximize ? "max" : "min")}";
             return str;
         }
     }

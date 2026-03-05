@@ -30,61 +30,82 @@ namespace ASPPR_Lab1
                 2. Отримати обернену матрицю;
                 3. Розв'язати систему алгебраїчних лінійних рівнянь;
                 4. Розв'язати систему лінійних нерівностей;
+                5. Знайти опорний розв'язок нерівностей;
                 0. Вихід.
                 """
                );
-                var choice = InputNumber();
-                var compiler = new ComputationReport();
-                switch (choice)
+                try
                 {
-                    case 0:
-                        iterate = false;
-                        break;
-                    case 1:
-                        {
-                            var matrix = InputMatrix();
-                            var rank = matrix.Rank;
-                            Console.WriteLine($"Ранг матриці: {matrix.Rank}");
+                    var choice = InputNumber();
+                    var compiler = new ComputationReport();
+                    switch (choice)
+                    {
+                        case 0:
+                            iterate = false;
                             break;
-                        }
+                        case 1:
+                            {
+                                var matrix = InputMatrix();
+                                var rank = matrix.Rank;
+                                Console.WriteLine($"Ранг матриці: {matrix.Rank}");
+                                break;
+                            }
 
-                    case 2:
-                        {
-                            var matrix = InputMatrix();
-                            var inverse = matrix.Invert(compiler);
-                            Console.WriteLine($"Обернена матриця:\n{inverse}");
-                            Console.WriteLine("Показати деталі розрахунків?");
-                            var showcompiler = InputBool();
-                            if (showcompiler) Console.WriteLine(compiler.Compile());
-                            break;
-                        }
-                    case 3:
-                        {
-                            var A = InputMatrix();
-                            var B = InputMatrix(A.RowCount, 1);
-                            var first = LinearAlgebraicEquationSolver.SolveFirstMethod(A, B, compiler);
-                            var second = LinearAlgebraicEquationSolver.SolveSecondMethod(A, B, compiler);
-                            var gauss = LinearAlgebraicEquationSolver.SolveGauss(A, B, compiler);
-                            Console.WriteLine($"Результат за першим способом: \n{first}");
-                            Console.WriteLine($"Результат за другим способом: \n{second}");
-                            Console.WriteLine($"Результат за третім способом: \n{gauss}");
-                            Console.WriteLine("Показати деталі розрахунків?");
-                            var showcompiler = InputBool();
-                            if (showcompiler) Console.WriteLine(compiler.Compile());
-                            break;
-                        }
-                    case 4:
-                        {
-                            var A = InputInequalitySystem();
-                            var Z = InputGoalFunction(A.VariableCount);
-                            var result = LinearInequalitySolver.Solve(A, Z);
-                            break;
-                        }
+                        case 2:
+                            {
+                                var matrix = InputMatrix();
+                                var inverse = matrix.Invert(compiler);
+                                Console.WriteLine($"Обернена матриця:\n{inverse}");
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(compiler.Compile());
+                                break;
+                            }
+                        case 3:
+                            {
+                                var A = InputMatrix();
+                                var B = InputMatrix(A.RowCount, 1);
+                                var first = LinearAlgebraicEquationSolver.SolveFirstMethod(A, B, compiler);
+                                var second = LinearAlgebraicEquationSolver.SolveSecondMethod(A, B, compiler);
+                                var gauss = LinearAlgebraicEquationSolver.SolveGauss(A, B, compiler);
+                                Console.WriteLine($"Результат за першим способом: \n{first}");
+                                Console.WriteLine($"Результат за другим способом: \n{second}");
+                                Console.WriteLine($"Результат за третім способом: \n{gauss}");
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(compiler.Compile());
+                                break;
+                            }
+                        case 4:
+                            {
+                                var A = InputInequalitySystem();
+                                var Z = InputGoalFunction(A.VariableCount);
+                                var comp = new ComputationReport();
+                                var result = LinearInequalitySolver.Solve(A, Z, comp);
+                                Console.WriteLine($"Розв'язок задачі лінійного програмування:\n{result}");
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(comp.Compile());
+                                break;
+                            }
+                        case 5:
+                            {
+                                var A = InputInequalitySystem();
+                                var Z = InputGoalFunction(A.VariableCount);
+                                var comp = new ComputationReport();
+                                var result = LinearInequalitySolver.GetReferenceSolution(A, Z, comp);
+                                Console.WriteLine($"Опорний розв'язок:\n{result}");
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(comp.Compile());
+                                break;
+                            }
+                    }
+                } catch(Exception ex)
+                {
+                    Console.WriteLine($"Помилка: {ex.Message}");
                 }
-
             }
-
-
         }
         static Matrix InputMatrix()
         {

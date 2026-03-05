@@ -11,16 +11,20 @@ namespace ASPPR_Lab2.Classes.Static
 {
     internal static class LinearInequalitySolver
     {
-        public static InequalitySystemSolution Solve(InequalitySystem A, GoalFunction Z)
+        public static InequalitySystemSolution Solve(InequalitySystem A, GoalFunction Z, IComputationReportCompiler compiler = null)
         {
-            var solution1 =  GetReferenceSolution(A, Z);
+            compiler?.AddAction("Згенерований протокол обчислення",  titleLevel:4);
+            compiler?.AddAction("Постановка задачі:", Z.ToString(), 0);
+            compiler?.AddAction("При обмеженнях:", A.ToString(), 0);
+            compiler?.AddAction("Перепишемо систему обмежень:", A.ToStringWithZeroes(), 0);
+            var solution1 =  GetReferenceSolution(A, Z, compiler);
 
             if (solution1 == null)
             {
                 return new InequalitySystemSolution(new List<double>(), new Matrix(0,0),Z.Type, 0, false, false, true);
             }
 
-            var solution2 = GetOptimalSolution(A, Z, solution1);
+            var solution2 = GetOptimalSolution(A, Z, solution1, compiler);
             if (solution2 == null)
             {
                 return solution1;
@@ -28,10 +32,13 @@ namespace ASPPR_Lab2.Classes.Static
             return solution2;
         }
 
-        public static InequalitySystemSolution? GetReferenceSolution(InequalitySystem A, GoalFunction Z)
+        public static InequalitySystemSolution? GetReferenceSolution(InequalitySystem A, GoalFunction Z, IComputationReportCompiler? compiler = null)
         {
             var matrix = ConvertInputToMatrix(A, Z);
             matrix.RowMarkers[matrix.RowCount - 1] = "Z";
+            compiler?.AddAction("Вхідна симлекс-таблиця:", matrix.ToStringWithMarkers(), 0);
+            compiler?.AddAction("Пошук опорного розв'язку:", titleLevel: 2);
+            
             var success = false;
             do
             {
@@ -39,6 +46,7 @@ namespace ASPPR_Lab2.Classes.Static
                 if (!negativeNumbersInConstantCol.Any())
                 {
                     success = true;
+                    compiler?.AddAction("Опорний розв'язок знайдено!", titleLevel: 1);
                     break;
                 }
                 var firstNegNumPos = negativeNumbersInConstantCol.First();
@@ -46,7 +54,8 @@ namespace ASPPR_Lab2.Classes.Static
                 if (!solutionCols.Any())
                 {
                     success = false;
-                    break;
+                    compiler?.AddAction("Помилка! Система обмежень є суперечливою!", titleLevel: 1);
+                    throw new Exception("Помилка! Система обмежень є суперечливою!");
                 }
                 var firstSolutionCol = solutionCols.First();
                 var col1 = matrix.GetColumnAsList(firstSolutionCol);
@@ -57,21 +66,31 @@ namespace ASPPR_Lab2.Classes.Static
                 {
                     if (Math.Abs(col1[i]) <= Double.Epsilon) continue;
                     var ratio = col2[i] / col1[i];
-                    if (ratio < 0) continue;
+                    var signum1 = double.IsNegative(col1[i]) ? -1 : 1;
+                    var signum2 = double.Sign(col2[i]) == 0 ? 1 : double.Sign(col2[i]);
+                    if (ratio < 0 || signum1 * signum2 < 0) continue;
                     if (ratio < minimalNonNegativeRatio)
                     {
                         minimalNonNegativeRatio = ratio;
                         solutionRow = i;
                     }
                 }
+                compiler?.AddAction($"Розв'язувальний рядок:{solutionRow} ({matrix.RowMarkers[solutionRow]})", titleLevel: 0);
+                compiler?.AddAction($"Розв'язувальний стовпець:{firstSolutionCol} ({matrix.ColMarkers[firstSolutionCol]})", titleLevel: 0);
+
                 matrix = matrix.JordanExcludeModified(solutionRow, firstSolutionCol);
+                compiler?.AddAction("Таблиця після виконання МЖВ:", matrix.ToStringWithMarkers(), 0);
             } while(!success);
-            var result = ParseSolution(matrix);
-            return success? new InequalitySystemSolution(result,matrix,Z.Type, Z.CalculateResultWithValues(result), false, false, false): null;
+            if (!success) return null;
+            var resultList = ParseSolution(matrix);
+            var result = new InequalitySystemSolution(resultList, matrix, Z.Type, Z.CalculateResultWithValues(resultList), false, false, false);
+            compiler?.AddAction("Знайдено опорний розв'язок:", result.ToString(), titleLevel: 1);
+            return result;
         }
-        public static InequalitySystemSolution? GetOptimalSolution(InequalitySystem A, GoalFunction Z, InequalitySystemSolution referenceSolution)
+        public static InequalitySystemSolution? GetOptimalSolution(InequalitySystem A, GoalFunction Z, InequalitySystemSolution referenceSolution, IComputationReportCompiler? compiler = null)
         {
             var matrix = referenceSolution.SolutionMatrix;
+            compiler?.AddAction("Пошук оптимального розв'язку:", titleLevel: 2);
             var success = false;
             do
             {
@@ -79,6 +98,7 @@ namespace ASPPR_Lab2.Classes.Static
                 if (!negativeNumbersInZRow.Any())
                 {
                     success = true;
+                    compiler?.AddAction("Оптимальний розв'язок вже знайдено!", titleLevel: 1);
                     break;
                 }
                 var firstSolutionCol = negativeNumbersInZRow.First();
@@ -104,12 +124,21 @@ namespace ASPPR_Lab2.Classes.Static
                 if (solutionRow == -1)
                 {
                     success = false;
-                    break;
+                    compiler?.AddAction("Помилка! Функція не обмежена зверху!", titleLevel: 1);
+                    throw new Exception("Помилка! Функція не обмежена зверху!");
                 }
+                compiler?.AddAction($"Розв'язувальний рядок:{solutionRow} ({matrix.RowMarkers[solutionRow]})", titleLevel: 0);
+                compiler?.AddAction($"Розв'язувальний стовпець:{firstSolutionCol} ({matrix.ColMarkers[firstSolutionCol]})", titleLevel: 0);
+
                 matrix = matrix.JordanExcludeModified(solutionRow, firstSolutionCol);
+                compiler?.AddAction("Таблиця після виконання МЖВ:", matrix.ToStringWithMarkers(), 0);
+
             } while (!success);
-            var result = ParseSolution(matrix);
-            return success ? new InequalitySystemSolution(result, matrix, Z.Type, Z.CalculateResultWithValues(result), true, false, false) : null;
+            if (!success) throw new Exception("Оптимальне рішення не знайдено!");
+            var resultList = ParseSolution(matrix);
+            var result = new InequalitySystemSolution(resultList, matrix, Z.Type, Z.CalculateResultWithValues(resultList), true, false,  false);
+            compiler?.AddAction("Знайдено оптимальний розв'язок:", result.ToString(), titleLevel: 1);
+            return result;
         }
 
         private static List<double> ParseSolution(Matrix A)
@@ -132,7 +161,6 @@ namespace ASPPR_Lab2.Classes.Static
             var matrix = A.ConvertToMatrix();
             var zRow = Z.ConvertToMatrix();
             matrix.AddRow(zRow[0]);
-            Console.WriteLine(matrix);
             return matrix;
         }
 

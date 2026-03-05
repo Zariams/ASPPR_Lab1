@@ -24,7 +24,8 @@ namespace ASPPR_Lab1
                 if (rowMarkers != null)
                 {
                     if (rowMarkers.Count != rows)
-                        throw new ArgumentException("The number of row markers must match the number of rows in the matrix.");
+                        RowMarkers = [];
+                        //throw new ArgumentException("The number of row markers must match the number of rows in the matrix.");
                     RowMarkers = rowMarkers;
                 }
                 else
@@ -35,7 +36,8 @@ namespace ASPPR_Lab1
                 if (colMarkers != null)
                 {
                     if (colMarkers.Count != cols)
-                        throw new ArgumentException("The number of column markers must match the number of columns in the matrix.");
+                        ColMarkers = [];
+                      //  throw new ArgumentException("The number of column markers must match the number of columns in the matrix.");
                     ColMarkers = colMarkers;
                 }
                 else
@@ -305,6 +307,32 @@ namespace ASPPR_Lab1
                     
                 }
                
+                return result;
+            }
+
+            public string ToStringWithMarkers()
+            {
+                var result = $"{"",10}|";
+                for (int i = 0; i < ColCount; i++)
+                {
+                    string v = $"{ColMarkers[i],20}|";
+                    result += v;
+                }
+                result += '\n' + new string('-', (ColCount+1) * 21) + '\n';
+                for (int i = 0 ; i < RowCount; i++)
+                {
+                    var row = _data[i];
+                    string r = $"{RowMarkers[i],10}|";
+                    foreach (var col in row)
+                    {
+                        string v = $"{Math.Round(col, 3),20}|";
+                        r += v;
+                    }
+                    result += r + '\n';
+                    result += new string('-', (ColCount + 1) * 21) + '\n';
+
+                }
+
                 return result;
             }
         }

@@ -66,6 +66,15 @@ namespace ASPPR_Lab1
             return str;
         }
 
+        public string ToStringWithZeroes()
+        {
+            var str = "";
+            foreach (var inequality in _inequalities)
+            {
+                str += inequality.ToStringWithZeroes() + "\n";
+            }
+            return str;
+        }
     }
 
 }
