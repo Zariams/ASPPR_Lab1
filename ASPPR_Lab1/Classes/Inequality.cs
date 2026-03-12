@@ -44,10 +44,11 @@ namespace ASPPR_Lab1
             var matrix = new Matrix(1, _coefficients.Count + 1);
             var signMultiplier = Sign switch
             {
-                Sign.LessOrEqual => -1,
-                Sign.GreaterOrEqual => 1,
-                Sign.LessStrict => -1,
-                Sign.GreaterStrict => 1,
+                Sign.LessOrEqual => 1,
+                Sign.GreaterOrEqual => -1,
+                Sign.LessStrict => 1,
+                Sign.GreaterStrict => -1,
+                Sign.Equals => 1,
                 _ => 1
             };
             for (int i = 0; i < _coefficients.Count; i++)
@@ -74,6 +75,7 @@ namespace ASPPR_Lab1
                 Sign.GreaterOrEqual => ">= ",
                 Sign.LessStrict => "< ",
                 Sign.GreaterStrict => "> ",
+                Sign.Equals => " = ",
                 _ => throw new Exception("Invalid sign")
             };
             str += $"{_constant}";
@@ -98,6 +100,7 @@ namespace ASPPR_Lab1
                 Sign.GreaterOrEqual => " >= ",
                 Sign.LessStrict => " < ",
                 Sign.GreaterStrict => " > ",
+                Sign.Equals => " = ",
                 _ => throw new Exception("Invalid sign")
             };
             str += "0";

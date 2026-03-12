@@ -252,6 +252,7 @@ namespace ASPPR_Lab1
             public void RemoveRow(int row)
             {
                 _data.RemoveAt(row);
+                RowMarkers.RemoveAt(row);
             }
             public Matrix GetColumn(int col)
             {
@@ -277,6 +278,7 @@ namespace ASPPR_Lab1
                 {
                     _data[i].RemoveAt(column);
                 }
+                ColMarkers.RemoveAt(column);
             }
             public Matrix TakeLastColumn()
             {
@@ -289,7 +291,14 @@ namespace ASPPR_Lab1
                     .Select(row => new List<double>(row))
                     .ToList();
 
-                return new Matrix(copy);
+                var matrix = new Matrix(copy);
+                matrix.RowMarkers = new List<string>();
+                matrix.ColMarkers = new List<string>();
+                foreach (var marker in RowMarkers)
+                    matrix.RowMarkers.Add(marker);
+                foreach (var marker in ColMarkers)
+                    matrix.ColMarkers.Add(marker);
+                return matrix;
             }
             public override string ToString()
             {

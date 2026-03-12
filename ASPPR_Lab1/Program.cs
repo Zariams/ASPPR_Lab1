@@ -31,6 +31,7 @@ namespace ASPPR_Lab1
                 3. Розв'язати систему алгебраїчних лінійних рівнянь;
                 4. Розв'язати систему лінійних нерівностей;
                 5. Знайти опорний розв'язок нерівностей;
+                6. Викреслити нульові стовпці;
                 0. Вихід.
                 """
                );
@@ -93,8 +94,21 @@ namespace ASPPR_Lab1
                                 var A = InputInequalitySystem();
                                 var Z = InputGoalFunction(A.VariableCount);
                                 var comp = new ComputationReport();
-                                var result = LinearInequalitySolver.GetReferenceSolution(A, Z, comp);
+                                var result = LinearInequalitySolver.GetReferenceSolutionStandalone(A, Z, comp);
                                 Console.WriteLine($"Опорний розв'язок:\n{result}");
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(comp.Compile());
+                                break;
+                            }
+                        case 6:
+                            {
+                                var A = InputInequalitySystem();
+                                var Z = InputGoalFunction(A.VariableCount);
+                                var comp = new ComputationReport();
+
+                                var result = LinearInequalitySolver.CrossOutZeroRows(A, Z, comp);
+                                Console.WriteLine($"Вихідна сімплекс-таблиця:\n{result.ToStringWithMarkers()}");
                                 Console.WriteLine("Показати деталі розрахунків?");
                                 var showcompiler = InputBool();
                                 if (showcompiler) Console.WriteLine(comp.Compile());
@@ -194,12 +208,13 @@ namespace ASPPR_Lab1
                     2. - >=
                     3. - <
                     4. - >
+                    5. - = 
                     """);
                 var str = Console.ReadLine();
-                success = int.TryParse(str, out num) && num > 0 && num < 5;
+                success = int.TryParse(str, out num) && num > 0 && num < 6;
 
             } while (!success);
-            return (Sign)num;
+            return (Sign)(num-1);
         }
         public static Inequality InputInequality(int cols)
         {

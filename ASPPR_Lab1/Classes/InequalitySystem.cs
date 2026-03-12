@@ -35,6 +35,7 @@ namespace ASPPR_Lab1
         public Matrix ConvertToMatrix()
         {
             var matrix = new Matrix(_inequalities.Count, VariableCount + 1);
+            var varCount = 0;
             for (int i = 0; i < _inequalities.Count; i++)
             {
                 var inequalityMatrix = _inequalities[i].ConvertToMatrix();
@@ -42,6 +43,15 @@ namespace ASPPR_Lab1
                 {
                     matrix[i, j] = inequalityMatrix[0, j];
                 }
+                if (_inequalities[i].Sign == Sign.Equals)
+                {
+                    matrix.RowMarkers[i] = "0";
+                }
+                else
+                {
+                    matrix.RowMarkers[i] = $"y{++varCount}";                
+                }
+
             }
             matrix.ColMarkers[matrix.ColCount - 1] = "1";
             return matrix;

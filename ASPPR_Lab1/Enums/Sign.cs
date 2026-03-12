@@ -7,6 +7,7 @@
         GreaterOrEqual,
         LessStrict,
         GreaterStrict,
+        Equals,
         None
     }
 
