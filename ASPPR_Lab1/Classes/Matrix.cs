@@ -249,6 +249,14 @@ namespace ASPPR_Lab1
                 else
                     RowMarkers.Add($"y{RowCount}");
             }
+            public void InsertRow(List<double> row, int index,  string? marker = null)
+            {
+                _data.Insert(index, row);
+                if (marker != null)
+                    RowMarkers.Insert(index, marker);
+                else
+                    RowMarkers.Insert(index, $"y{index + 1}");
+            }
             public void RemoveRow(int row)
             {
                 _data.RemoveAt(row);
@@ -343,6 +351,17 @@ namespace ASPPR_Lab1
                 }
 
                 return result;
+            }
+
+            public void RoundToDecimalPlaces(int decimalPlaces)
+            {
+                for (int i = 0; i < RowCount; i++)
+                {
+                    for (int j = 0; j < ColCount; j++)
+                    {
+                        this[i, j] = Math.Round(this[i, j], decimalPlaces);
+                    }
+                }
             }
         }
     }

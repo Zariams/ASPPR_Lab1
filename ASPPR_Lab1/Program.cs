@@ -32,6 +32,7 @@ namespace ASPPR_Lab1
                 4. Розв'язати систему лінійних нерівностей;
                 5. Знайти опорний розв'язок нерівностей;
                 6. Викреслити нульові стовпці;
+                7. Розрахувати систему лінійних нерівностей з цілочисельними розв'язками;
                 0. Вихід.
                 """
                );
@@ -112,6 +113,20 @@ namespace ASPPR_Lab1
                                 Console.WriteLine("Показати деталі розрахунків?");
                                 var showcompiler = InputBool();
                                 if (showcompiler) Console.WriteLine(comp.Compile());
+                                break;
+                            }
+                        case 7:
+                            {
+                                var A = InputInequalitySystem();
+                                var Z = InputGoalFunction(A.VariableCount);
+                                var comp = new ComputationReport();
+                                var result = LinearInequalitySolver.SolveIntegerSystem(A, Z, comp);
+                                Console.WriteLine($"Розв'язок задачі лінійного програмування:\n{result}");
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(comp.Compile());
+                                break;
+
                                 break;
                             }
                     }

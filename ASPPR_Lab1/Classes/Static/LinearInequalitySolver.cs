@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using ASPPR_Lab1;
@@ -33,7 +34,7 @@ namespace ASPPR_Lab2.Classes.Static
             matrix.RowMarkers[matrix.RowCount - 1] = "Z";
             compiler?.AddAction("Вхідна симлекс-таблиця:", matrix.ToStringWithMarkers(), 0);
 
-            var solution1 =  GetReferenceSolution(matrix, Z, compiler);
+            var solution1 =  GetReferenceSolution(matrix, Z, compiler, A.VariableCount);
 
             if (solution1 == null)
             {
@@ -168,7 +169,7 @@ namespace ASPPR_Lab2.Classes.Static
             var success = false;
             do
             {
-                var negativeNumbersInZRow = FindNumberColsInRow(matrix, matrix.RowCount - 1, x => x < 0);
+                var negativeNumbersInZRow = FindNumberColsInRow(matrix, matrix.RowCount - 1, x => x < 0 && Math.Abs(x) > 0.01);
                 if (!negativeNumbersInZRow.Any())
                 {
                     success = true;
@@ -218,6 +219,7 @@ namespace ASPPR_Lab2.Classes.Static
         private static List<double> ParseSolution(Matrix matrix, int varCount)
         {
             var solution = new List<double>(Enumerable.Repeat(0d, varCount));
+            matrix.RoundToDecimalPlaces(3);
             for (int i = 0; i < matrix.RowCount - 1; i++)
             {
                 var rowMarker = matrix.RowMarkers[i];
@@ -361,6 +363,76 @@ namespace ASPPR_Lab2.Classes.Static
             compiler?.AddAction("Вихідна симлекс-таблиця:", matrix.ToStringWithMarkers(), 0);
             return matrix;
         }
-    
+
+        public static InequalitySystemSolution SolveIntegerSystem(InequalitySystem A, GoalFunction Z, IComputationReportCompiler compiler = null)
+        {
+            compiler?.AddAction("Згенерований протокол обчислення", titleLevel: 4);
+            compiler?.AddAction("Постановка задачі:", Z.ToString(), 0);
+            compiler?.AddAction("При обмеженнях:", A.ToString(), 0);
+            compiler?.AddAction("Перепишемо систему обмежень:", A.ToStringWithZeroes(), 0);
+            var matrix = ConvertInputToMatrix(A, Z);
+            bool isInteger = false;
+            int i = 0;
+            InequalitySystemSolution solution = null;
+            do
+            {
+
+                matrix.RowMarkers[matrix.RowCount - 1] = "Z";
+                compiler?.AddAction("Вхідна симлекс-таблиця:", matrix.ToStringWithMarkers(), 0);
+                var crossedOutZeroRowsMatrix = CrossOutZeroRows(matrix, compiler);
+                var solutionRef = GetReferenceSolution(crossedOutZeroRowsMatrix, Z, compiler, A.VariableCount);
+
+                if (solutionRef == null)
+                {
+                    throw new Exception("Reference solution not found");//return new InequalitySystemSolution(new List<double>(), new Matrix(0, 0), Z.Type, 0, false, false, true);
+                }
+
+                var solutionOpt = GetOptimalSolution(A, Z, solutionRef, compiler);
+                if (solutionOpt == null)
+                {
+                    throw new Exception("Optimal solution not found");//return solutionRef;
+                }
+                isInteger = solutionOpt.IsSolutionInteger();
+                if (!isInteger)
+                {
+                    compiler?.AddAction("Розв'язок не є цілочисельним, шукаємо наступний...", titleLevel: 1);
+                    matrix = solutionOpt.SolutionMatrix;
+
+                    var highestFractionalCoef = matrix.GetColumnAsList(matrix.ColCount-1)
+                        .Select((value, index) => new { integer = GetIntegerPart(value).Item1, frac = GetIntegerPart(value).Item2, index })
+                        .Where(x => matrix.RowMarkers[x.index].Contains('x'))
+                        .OrderByDescending(coef => coef.frac)
+                        .GroupBy(coef => coef.frac)
+                        .First()
+                        .Last();
+                    compiler.AddAction($"Коеф. з найбільшою часткою: {matrix.RowMarkers[highestFractionalCoef.index]} ({highestFractionalCoef.frac})");
+                    var rowIndex = highestFractionalCoef.index;
+                    var newRow = matrix[rowIndex].Select(x => GetIntegerPart(x).Item2 * -1).ToList();
+                    if (newRow.All(x => Math.Abs(x) <= 0.01))
+                    {
+                        throw new Exception("Помилка! Система обмежень не має цілочисельного розв'язку!");
+                    }
+                    matrix.InsertRow(newRow,matrix.RowCount-1, $"s{++i}");
+                    compiler?.AddAction("Таблиця з новим обмеженням:",matrix.ToStringWithMarkers(),1);
+                }
+                else
+                {
+                    solution = solutionOpt;
+                    solution.SolutionCoefficients = solution.SolutionCoefficients.Select(c => Math.Round(c)).ToList();
+                    solution.GoalFunctionValue = Z.CalculateResultWithValues(solution.SolutionCoefficients);
+                }
+            } while (!isInteger);
+
+
+            return solution;
+        }
+
+        private static (double, double) GetIntegerPart(double value)
+        {
+            value = Math.Round(value, 3);
+            var integerPart = Math.Floor(value);
+            var fractionalPart = Math.Round(value - integerPart,3);
+            return (integerPart, fractionalPart);
+        }
     }
 }

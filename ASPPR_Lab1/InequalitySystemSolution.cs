@@ -11,6 +11,7 @@ namespace ASPPR_Lab1
         public bool IsOptimal { get; set; }
         public bool IsUnbounded { get; set; }
         public bool IsInfeasible { get; set; }
+        public bool isInteger { get; set; }
         public Matrix? SolutionMatrix { get; set; }
         public InequalitySystemSolution(List<double> solution, Matrix solutionMatrix, GoalFunctionType type , double goalFunctionValue, bool isOptimal, bool isUnbounded, bool isInfeasible)
         {
@@ -21,6 +22,11 @@ namespace ASPPR_Lab1
             IsUnbounded = isUnbounded;
             IsInfeasible = isInfeasible;
             SolutionMatrix = solutionMatrix;
+        }
+
+        public bool IsSolutionInteger()
+        {
+            return SolutionCoefficients.All(c => Math.Abs(c % 1) <= 0.01);
         }
 
         public override string ToString()
