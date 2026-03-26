@@ -85,6 +85,7 @@ namespace ASPPR_Lab1
                                 var comp = new ComputationReport();
                                 var result = LinearInequalitySolver.Solve(A, Z, comp);
                                 Console.WriteLine($"Розв'язок задачі лінійного програмування:\n{result}");
+                                Console.WriteLine($"Розв'язок двоїстої задачі:\n{result.ToStringDual()}");
                                 Console.WriteLine("Показати деталі розрахунків?");
                                 var showcompiler = InputBool();
                                 if (showcompiler) Console.WriteLine(comp.Compile());

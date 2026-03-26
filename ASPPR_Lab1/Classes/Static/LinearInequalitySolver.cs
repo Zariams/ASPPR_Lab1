@@ -32,7 +32,7 @@ namespace ASPPR_Lab2.Classes.Static
 
             var matrix = ConvertInputToMatrix(A, Z);
             matrix.RowMarkers[matrix.RowCount - 1] = "Z";
-            compiler?.AddAction("Вхідна симлекс-таблиця:", matrix.ToStringWithMarkers(), 0);
+            compiler?.AddAction("Вхідна симлекс-таблиця:", matrix.ToStringWithDualMarkers(), 0);
 
             var solution1 =  GetReferenceSolution(matrix, Z, compiler, A.VariableCount);
 
@@ -46,6 +46,8 @@ namespace ASPPR_Lab2.Classes.Static
             {
                 return solution1;
             }
+            compiler.AddAction("Знайдено оптимальний розв'язок для дуальної задачі:", solution2.ToStringDual(), titleLevel: 1);
+
             return solution2;
         }
         private static InequalitySystemSolution? GetReferenceSolution(Matrix matrix, GoalFunction Z, IComputationReportCompiler? compiler = null, int varCount = 0)
@@ -92,11 +94,12 @@ namespace ASPPR_Lab2.Classes.Static
                 compiler?.AddAction($"Розв'язувальний стовпець:{firstSolutionCol} ({matrix.ColMarkers[firstSolutionCol]})", titleLevel: 0);
 
                 matrix = matrix.JordanExcludeModified(solutionRow, firstSolutionCol);
-                compiler?.AddAction("Таблиця після виконання МЖВ:", matrix.ToStringWithMarkers(), 0);
+                compiler?.AddAction("Таблиця після виконання МЖВ:", matrix.ToStringWithDualMarkers(), 0);
             } while (!success);
             if (!success) return null;
             var resultList = ParseSolution(matrix,varCount);
-            var result = new InequalitySystemSolution(resultList, matrix, Z.Type, Z.CalculateResultWithValues(resultList), false, false, false);
+            var resultListDual = ParseSolutionDual(matrix, varCount);
+            var result = new InequalitySystemSolution(resultList,resultListDual, matrix, Z.Type, Z.CalculateResultWithValues(resultList), false, false, false);
             compiler?.AddAction("Знайдено опорний розв'язок:", result.ToString(), titleLevel: 1);
             return result;
         }
@@ -113,6 +116,7 @@ namespace ASPPR_Lab2.Classes.Static
             if (A.Inequalities.Any(ineq => ineq.Sign == Sign.Equals))
             {
                 matrix = CrossOutZeroRows(matrix, compiler);
+                matrix = CrossOutZeroCols(matrix);
             }
             var success = false;
             do
@@ -158,7 +162,8 @@ namespace ASPPR_Lab2.Classes.Static
             } while (!success);
             if (!success) return null;
             var resultList = ParseSolution(matrix, A.VariableCount);
-            var result = new InequalitySystemSolution(resultList, matrix, Z.Type, Z.CalculateResultWithValues(resultList), false, false, false);
+            var resultListDual = ParseSolutionDual(matrix, A.Inequalities.Count);
+            var result = new InequalitySystemSolution(resultList,resultListDual, matrix, Z.Type, Z.CalculateResultWithValues(resultList), false, false, false);
             compiler?.AddAction("Знайдено опорний розв'язок:", result.ToString(), titleLevel: 1);
             return result;
         }
@@ -206,12 +211,13 @@ namespace ASPPR_Lab2.Classes.Static
                 compiler?.AddAction($"Розв'язувальний стовпець:{firstSolutionCol} ({matrix.ColMarkers[firstSolutionCol]})", titleLevel: 0);
 
                 matrix = matrix.JordanExcludeModified(solutionRow, firstSolutionCol);
-                compiler?.AddAction("Таблиця після виконання МЖВ:", matrix.ToStringWithMarkers(), 0);
+                compiler?.AddAction("Таблиця після виконання МЖВ:", matrix.ToStringWithDualMarkers(), 0);
 
             } while (!success);
             if (!success) throw new Exception("Оптимальне рішення не знайдено!");
             var resultList = ParseSolution(matrix,A.VariableCount);
-            var result = new InequalitySystemSolution(resultList, matrix, Z.Type, Z.CalculateResultWithValues(resultList), true, false,  false);
+            var resultListDual = ParseSolutionDual(matrix, A.Inequalities.Count);
+            var result = new InequalitySystemSolution(resultList, resultListDual, matrix, Z.Type, Z.CalculateResultWithValues(resultList), true, false,  false);
             compiler?.AddAction("Знайдено оптимальний розв'язок:", result.ToString(), titleLevel: 1);
             return result;
         }
@@ -229,6 +235,23 @@ namespace ASPPR_Lab2.Classes.Static
                     solution[variableIndex-1] = matrix[i, matrix.ColCount - 1];
                 }
             }
+            
+            return solution;
+        }
+        private static List<double> ParseSolutionDual(Matrix matrix, int varCount)
+        {
+            var solution = new List<double>(Enumerable.Repeat(0d, varCount));
+            matrix.RoundToDecimalPlaces(3);
+            for (int i = 0; i < matrix.ColCount - 1; i++)
+            {
+                var colMarker = matrix.ColMarkersDual[i];
+                if (colMarker.StartsWith("u"))
+                {
+                    var variableIndex = int.Parse(colMarker.Substring(1));
+                    solution[variableIndex-1] = matrix[matrix.RowCount - 1, i];
+                }
+
+            }
             return solution;
         }
 
@@ -236,7 +259,7 @@ namespace ASPPR_Lab2.Classes.Static
         {
             var matrix = A.ConvertToMatrix();
             var zRow = Z.ConvertToMatrix();
-            matrix.AddRow(zRow[0]);
+            matrix.AddRow(zRow[0],"Z","1");
             return matrix;
         }
 
@@ -268,9 +291,11 @@ namespace ASPPR_Lab2.Classes.Static
             compiler?.AddAction("Перепишемо систему обмежень:", A.ToStringWithZeroes(), 0);
             var matrix = ConvertInputToMatrix(A, Z);
             matrix.RowMarkers[matrix.RowCount - 1] = "Z";
-            compiler?.AddAction("Вхідна симлекс-таблиця:", matrix.ToStringWithMarkers(), 0);
+            compiler?.AddAction("Вхідна симлекс-таблиця:", matrix.ToStringWithDualMarkers(), 0);
             var crossedOutZeroRowsMatrix = CrossOutZeroRows(matrix, compiler);
-            var solution1 = GetReferenceSolution(crossedOutZeroRowsMatrix, Z, compiler,A.VariableCount);
+            var dualFormulas = ParseDualFormulas(crossedOutZeroRowsMatrix, crossedOutZeroRowsMatrix.ColCount-1);
+            var crossedOutZeroColsMatrix = CrossOutZeroCols(crossedOutZeroRowsMatrix);
+            var solution1 = GetReferenceSolution(crossedOutZeroColsMatrix, Z, compiler,A.VariableCount);
 
             if (solution1 == null)
             {
@@ -282,6 +307,38 @@ namespace ASPPR_Lab2.Classes.Static
             {
                 return solution1;
             }
+            var solutions = new List<double>(solution2.SolutionCoefficientsDual);
+            solutions.Add(1);
+
+            for (int i = dualFormulas.Count-1; i >= 0; i--)
+            {
+                var formula = dualFormulas[i];
+                var l = formula.Count;
+                var sum = 0d;
+                //Calculate variable value
+                var str = $"U[{i + 1}] = ";
+                for (int j = l - 1; j >= 0; j--)
+                {
+                    sum += formula[j] * solutions[j];
+                    str += $"({Math.Round(formula[j], 3)} * ({Math.Round(solutions[j], 3)}))";
+                    if (j == 0)
+                    {
+                        str += " = ";
+                        continue;
+                    }
+                    str += " + ";
+                }
+                str += Math.Round(sum, 3);
+                compiler?.AddAction(str, titleLevel: 0);
+                if (sum != 0)
+                    solutions[i] = sum;
+                else 
+                    solutions[i] = solution2.SolutionCoefficientsDual[i];
+            }
+            solutions.RemoveAt(solutions.Count - 1);
+            solution2.SolutionCoefficientsDual = solutions;
+            compiler.AddAction("Знайдено оптимальний розв'язок для дуальної задачі:", solution2.ToStringDual(), titleLevel: 1);
+
             return solution2;
         }
         public static Matrix CrossOutZeroRows(InequalitySystem A, GoalFunction Z, IComputationReportCompiler? compiler = null)
@@ -310,10 +367,11 @@ namespace ASPPR_Lab2.Classes.Static
                     break;
                 }
                 int firstSolutionCol = -1;
+
                 foreach (var row in zeroRows)
                 {
                     var positiveNumbersInCoefRow = FindNumberColsInRow(matrix, row, x => x > 0);
-
+                    positiveNumbersInCoefRow = positiveNumbersInCoefRow.Where(positiveNumbersInCoefRow => !matrix.ColMarkers[positiveNumbersInCoefRow].StartsWith("0")).ToList();
                     firstSolutionCol = positiveNumbersInCoefRow.Any()? positiveNumbersInCoefRow.First(): firstSolutionCol;
                 }
                 if (firstSolutionCol == -1)
@@ -352,18 +410,29 @@ namespace ASPPR_Lab2.Classes.Static
                 matrix = matrix.JordanExcludeModified(solutionRow, firstSolutionCol);
                 if (matrix.ColMarkers[firstSolutionCol].StartsWith("0"))
                 {
-                    matrix.RemoveColumn(firstSolutionCol);
+                   // matrix.RemoveColumn(firstSolutionCol);
                     
                 }
-                compiler?.AddAction("Таблиця після виконання МЖВ:", matrix.ToStringWithMarkers(), 0);
+                compiler?.AddAction("Таблиця після виконання МЖВ:", matrix.ToStringWithDualMarkers(), 0);
             } while (!success);
             if (!success) return null;
             
 
-            compiler?.AddAction("Вихідна симлекс-таблиця:", matrix.ToStringWithMarkers(), 0);
+            compiler?.AddAction("Вихідна симлекс-таблиця:", matrix.ToStringWithDualMarkers(), 0);
             return matrix;
         }
-
+        private static Matrix CrossOutZeroCols(Matrix matrix)
+        {
+            matrix = matrix.DeepCopy();
+            var zeroCols = matrix.ColMarkers.Select((marker, index) => new { marker, index }).Where(x => x.marker.StartsWith("0")).Select(x => x.index).ToList();
+            while (zeroCols.Any())
+            {
+                var colToRemove = zeroCols.First();
+                matrix.RemoveColumn(colToRemove);
+                zeroCols = matrix.ColMarkers.Select((marker, index) => new { marker, index }).Where(x => x.marker.StartsWith("0")).Select(x => x.index).ToList();
+            }    
+            return matrix;
+        }
         public static InequalitySystemSolution SolveIntegerSystem(InequalitySystem A, GoalFunction Z, IComputationReportCompiler compiler = null)
         {
             compiler?.AddAction("Згенерований протокол обчислення", titleLevel: 4);
@@ -426,13 +495,41 @@ namespace ASPPR_Lab2.Classes.Static
 
             return solution;
         }
-
         private static (double, double) GetIntegerPart(double value)
         {
             value = Math.Round(value, 3);
             var integerPart = Math.Floor(value);
             var fractionalPart = Math.Round(value - integerPart,3);
             return (integerPart, fractionalPart);
+        }
+
+        private static List<List<double>> ParseDualFormulas(Matrix matrix, int varCount)
+        {
+            var solution = new List<List<double>>();
+            for (int i = 0; i < varCount; i++)
+            {
+                solution.Add(new List<double>(Enumerable.Repeat(0d, varCount+1)));
+            }
+            matrix.RoundToDecimalPlaces(3);
+            for (int i = 0; i < matrix.ColCount - 1; i++)
+            {
+                var colMarker = matrix.ColMarkersDual[i];
+                if (colMarker.StartsWith("u"))
+                {
+                    var variableIndex = int.Parse(colMarker.Substring(1));
+                    for (int j = 0; j < matrix.RowCount; j++)
+                    {
+                        if (matrix.RowMarkersDual[j].StartsWith("u"))
+                        {
+                            var variableIndex2 = int.Parse(matrix.RowMarkersDual[j].Substring(1));
+                            solution[variableIndex - 1][variableIndex2 - 1] = matrix[j, i];
+                        }
+                    }
+                    solution[variableIndex-1][varCount] = matrix[matrix.RowCount - 1, i];
+                }
+                
+            }
+            return solution;
         }
     }
 }

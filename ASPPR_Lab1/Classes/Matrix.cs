@@ -12,8 +12,10 @@ namespace ASPPR_Lab1
             public int RowCount => _data.Count;
             public int ColCount => _data[0].Count;
             public List<string> RowMarkers { get; set; } = new List<string>();
+            public List<string> RowMarkersDual { get; set; } = new List<string>();
             public List<string> ColMarkers { get; set; } = new List<string>();
-            public Matrix(int rows, int cols, List<string>? rowMarkers = null, List<string>? colMarkers = null)
+            public List<string> ColMarkersDual { get; set; } = new List<string>();
+            public Matrix(int rows, int cols, List<string>? rowMarkers = null, List<string>? colMarkers = null, List<string>? rowMarkersDual = null, List<string>? colMarkersDual = null)
             {
                 var data = new List<List<double>>();
 
@@ -33,6 +35,18 @@ namespace ASPPR_Lab1
                     for (int i = 0; i < rows; i++)
                         RowMarkers.Add($"y{i + 1}");
                 }
+                if (rowMarkersDual != null)
+                {
+                    if (rowMarkersDual.Count != rows)
+                        RowMarkersDual = [];
+                    RowMarkersDual = rowMarkersDual;
+                }
+                else
+                {
+                    for (int i = 0; i < rows; i++)
+                        RowMarkersDual.Add($"u{i + 1}");
+                }
+
                 if (colMarkers != null)
                 {
                     if (colMarkers.Count != cols)
@@ -45,8 +59,20 @@ namespace ASPPR_Lab1
                     for (int i = 0; i < cols; i++)
                         ColMarkers.Add($"x{i + 1}");
                 }
+
+                if (colMarkersDual != null)
+                {
+                    if (colMarkersDual.Count != cols)
+                        ColMarkersDual = [];
+                    ColMarkersDual = colMarkersDual;
+                }
+                else
+                {
+                    for (int i = 0; i < cols; i++)
+                        ColMarkersDual.Add($"v{i + 1}");
+                }
             }
-            public Matrix(List<List<double>> data, List<string>? rowMarkers = null, List<string>? colMarkers = null)
+            public Matrix(List<List<double>> data, List<string>? rowMarkers = null, List<string>? colMarkers = null, List<string>? rowMarkersDual = null, List<string>? colMarkersDual = null)
             {
                 _data = data;
                 if (rowMarkers != null)
@@ -60,7 +86,17 @@ namespace ASPPR_Lab1
                     for (int i = 0; i < data.Count; i++)
                         RowMarkers.Add($"y{i + 1}");
                 }
-
+                if (rowMarkersDual != null)
+                {
+                    if (rowMarkersDual.Count != data.Count)
+                        RowMarkersDual = [];
+                    RowMarkersDual = rowMarkersDual;
+                }
+                else
+                {
+                    for (int i = 0; i < data.Count; i++)
+                        RowMarkersDual.Add($"u{i + 1}");
+                }
                 if (colMarkers != null)
                 {
                     if (colMarkers.Count != data[0].Count)
@@ -71,6 +107,17 @@ namespace ASPPR_Lab1
                 {
                     for (int i = 0; i < data[0].Count; i++)
                         ColMarkers.Add($"x{i + 1}");
+                }
+                if (colMarkersDual != null)
+                {
+                    if (colMarkersDual.Count != data[0].Count)
+                        ColMarkersDual = [];
+                    ColMarkersDual = colMarkersDual;
+                }
+                else
+                {
+                    for (int i = 0; i < data[0].Count; i++)
+                        ColMarkersDual.Add($"v{i + 1}");
                 }
             }
 
@@ -177,6 +224,8 @@ namespace ASPPR_Lab1
 
                 resultMatrix.RowMarkers[row] = ColMarkers[col];
                 resultMatrix.ColMarkers[col] = RowMarkers[row];
+                resultMatrix.RowMarkersDual[row] = ColMarkersDual[col];
+                resultMatrix.ColMarkersDual[col] = RowMarkersDual[row];
                 return resultMatrix;
             }
 
@@ -185,7 +234,7 @@ namespace ASPPR_Lab1
                 var rowCount = this.RowCount;
                 var colCount = this.ColCount;
                 var solutionElement = this[row, col];
-                var resultMatrix = new Matrix(rowCount, colCount,new List<string>(RowMarkers), new List<string>(ColMarkers));
+                var resultMatrix = new Matrix(rowCount, colCount,new List<string>(RowMarkers), new List<string>(ColMarkers), new List<string>(RowMarkersDual), new List<string>(ColMarkersDual));
 
 
                 //Step 1: set solution element to 1
@@ -218,6 +267,8 @@ namespace ASPPR_Lab1
                 }
                 resultMatrix.RowMarkers[row] = ColMarkers[col];
                 resultMatrix.ColMarkers[col] = RowMarkers[row];
+                resultMatrix.RowMarkersDual[row] = ColMarkersDual[col];
+                resultMatrix.ColMarkersDual[col] = RowMarkersDual[row];
                 return resultMatrix;
             }
 
@@ -241,26 +292,37 @@ namespace ASPPR_Lab1
             {
                 _data[row].Add(value);
             }
-            public void AddRow(List<double> row, string? marker = null)
+            public void AddRow(List<double> row, string? marker = null, string? markerDual = null)
             {
                 _data.Add(row);
                 if (marker != null)
                     RowMarkers.Add(marker);
                 else
                     RowMarkers.Add($"y{RowCount}");
+
+                if (markerDual != null)
+                    RowMarkersDual.Add(markerDual);
+                else
+                    RowMarkersDual.Add($"u{RowCount}*");
             }
-            public void InsertRow(List<double> row, int index,  string? marker = null)
+            public void InsertRow(List<double> row, int index,  string? marker = null, string? markerDual = null)
             {
                 _data.Insert(index, row);
                 if (marker != null)
                     RowMarkers.Insert(index, marker);
                 else
                     RowMarkers.Insert(index, $"y{index + 1}");
+
+                if (markerDual != null)
+                    RowMarkersDual.Insert(index, markerDual);
+                else
+                    RowMarkersDual.Insert(index, $"u{index + 1}*");
             }
             public void RemoveRow(int row)
             {
                 _data.RemoveAt(row);
                 RowMarkers.RemoveAt(row);
+                RowMarkersDual.RemoveAt(row);
             }
             public Matrix GetColumn(int col)
             {
@@ -287,6 +349,7 @@ namespace ASPPR_Lab1
                     _data[i].RemoveAt(column);
                 }
                 ColMarkers.RemoveAt(column);
+                ColMarkersDual.RemoveAt(column);
             }
             public Matrix TakeLastColumn()
             {
@@ -306,6 +369,12 @@ namespace ASPPR_Lab1
                     matrix.RowMarkers.Add(marker);
                 foreach (var marker in ColMarkers)
                     matrix.ColMarkers.Add(marker);
+                matrix.RowMarkersDual = new List<string>();
+                matrix.ColMarkersDual = new List<string>();
+                foreach (var marker in RowMarkersDual)
+                    matrix.RowMarkersDual.Add(marker);
+                foreach (var marker in ColMarkersDual)
+                    matrix.ColMarkersDual.Add(marker);
                 return matrix;
             }
             public override string ToString()
@@ -353,6 +422,31 @@ namespace ASPPR_Lab1
                 return result;
             }
 
+            public string ToStringWithDualMarkers()
+            {
+                var result = $"{"",10}|";
+                for (int i = 0; i < ColCount; i++)
+                {
+                    string v = $"{ColMarkers[i],10},{ColMarkersDual[i],9}|";
+                    result += v;
+                }
+               
+                result += '\n' + new string('-', (ColCount + 1) * 21) + '\n';
+                for (int i = 0; i < RowCount; i++)
+                {
+                    var row = _data[i];
+                    string r = $"{RowMarkers[i],5},{RowMarkersDual[i],5}|";
+                    foreach (var col in row)
+                    {
+                        string v = $"{Math.Round(col, 3),20}|";
+                        r += v;
+                    }
+                    result += r + '\n';
+                    result += new string('-', (ColCount + 1) * 21) + '\n';
+
+                }
+                return result;
+            }
             public void RoundToDecimalPlaces(int decimalPlaces)
             {
                 for (int i = 0; i < RowCount; i++)
