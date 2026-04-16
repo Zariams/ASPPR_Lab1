@@ -33,6 +33,7 @@ namespace ASPPR_Lab1
                 5. Знайти опорний розв'язок нерівностей;
                 6. Викреслити нульові стовпці;
                 7. Розрахувати систему лінійних нерівностей з цілочисельними розв'язками;
+                8. Розв'язати матричну гру з нульовою сумою;
                 0. Вихід.
                 """
                );
@@ -127,7 +128,23 @@ namespace ASPPR_Lab1
                                 var showcompiler = InputBool();
                                 if (showcompiler) Console.WriteLine(comp.Compile());
                                 break;
-
+                            }
+                        case 8:
+                            {
+                                Console.WriteLine("Введіть кількість ігор для генерації звіту (0 - без звіту)");
+                                var tries = InputNumber();
+                                var M = InputMatrix();
+                                var comp = new ComputationReport();
+                                var result = MatrixGameSolver.Solve(M,tries, comp);
+                                Console.WriteLine($"Значення гри: \n{result}");
+                                if (result.Model != null)
+                                {
+                                    var filePath = WriteToCsv(result.Model);
+                                    Console.WriteLine($"Звіт з моделювання гри записано у файл: {filePath}");
+                                }
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(comp.Compile());
                                 break;
                             }
                     }
@@ -136,6 +153,19 @@ namespace ASPPR_Lab1
                     Console.WriteLine($"Помилка: {ex.Message}");
                 }
             }
+        }
+
+        static string WriteToCsv(List<List<string>> contents)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var row in contents)
+            {
+                sb.AppendLine(string.Join(',', row));
+            }
+            //currently the file uses wrong encoding  for cyrillic characters: РќРѕРјРµСЂ РїР°СЂС‚С–С—,Р’РёРїР°РґРєРѕРІРµ С‡РёСЃР»Рѕ РіСЂР°РІС†СЏ Рђ,РЎС‚СЂР°С‚РµРіС–СЏ РіСЂР°РІС†СЏ Рђ,Р’РёРїР°РґРєРѕРІРµ С‡РёСЃР»Рѕ РіСЂР°РІС†СЏ Р’,РЎС‚СЂР°С‚РµРіС–СЏ РіСЂР°РІС†СЏ Р’,Р’РёРіСЂР°С€ РіСЂР°РІС†СЏ Рђ,РќР°РєРѕРїРёС‡РµРЅРёР№ РІРёРіСЂР°С€ Рђ,РЎРµСЂРµРґРЅС–Р№ РІРёРіСЂР°С€ Рђ (С†С–РЅР° РіСЂРё)
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), $"report_{DateTime.Now.ToString("yyyyMMddHHmmss")}.csv");
+            File.WriteAllText(filePath, sb.ToString(),Encoding.Unicode);
+            return filePath;
         }
         static Matrix InputMatrix()
         {

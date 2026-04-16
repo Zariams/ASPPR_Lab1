@@ -32,6 +32,25 @@ namespace ASPPR_Lab1
 
         }
 
+        public InequalitySystem(Matrix matrix, Sign signDef)
+        {
+            for (int i = 0; i < matrix.RowCount-1; i++)
+            {
+                var coefficients = new List<double>();
+                for (int j = 0; j < matrix.ColCount - 1; j++)
+                {
+                    coefficients.Add(matrix[i, j]);
+                }
+                var constant = matrix[i, matrix.ColCount - 1];
+                var sign = matrix.RowMarkers[i] switch
+                {
+                    "0" => Sign.Equals,
+                    _ => signDef
+                };
+                _inequalities.Add(new Inequality(coefficients, constant, sign));
+            }
+        }
+
         public Matrix ConvertToMatrix()
         {
             var matrix = new Matrix(_inequalities.Count, VariableCount + 1);

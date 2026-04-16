@@ -139,6 +139,18 @@ namespace ASPPR_Lab1
             {
                 get => _data;
             }
+            public List<List<double>> Columns
+            {
+                get {
+                    var columns = new List<List<double>>();
+                    for (int i = 0; i < ColCount; i++)
+                    {
+                        var column = GetColumnAsList(i);
+                        columns.Add(column);
+                    }
+                    return columns;
+                }
+            }
             public int Rank
             {
                 get {
@@ -184,7 +196,31 @@ namespace ASPPR_Lab1
 
                 return res;
             }
-
+            
+            public static Matrix operator +(Matrix m1, double n)
+            {
+                var matrix = m1.DeepCopy();
+                for (int i = 0; i < matrix.RowCount; i++)
+                {
+                    for (int j = 0; j < matrix.ColCount; j++)
+                    {
+                       matrix[i, j] = matrix[i, j] + n;
+                    }
+                }
+                return matrix;
+            }
+            public static Matrix operator *(Matrix m1, double n)
+            {
+                var matrix = m1.DeepCopy();
+                for (int i = 0; i < matrix.RowCount; i++)
+                {
+                    for (int j = 0; j < matrix.ColCount; j++)
+                    {
+                        matrix[i, j] = matrix[i, j] * n;
+                    }
+                }
+                return matrix;
+            }
             public Matrix JordanExclude(int row, int col)
             {
                 var rowCount = this.RowCount;
@@ -304,6 +340,25 @@ namespace ASPPR_Lab1
                     RowMarkersDual.Add(markerDual);
                 else
                     RowMarkersDual.Add($"u{RowCount}*");
+            }
+            public void AddColumn(List<double> column, string? marker = null, string? markerDual = null)
+            {
+                for (int i = 0; i < column.Count; i++)
+                {
+                    _data[i].Add(column[i]);
+                }
+                for (int i = column.Count; i < RowCount; i++)
+                {
+                    _data[i].Add(0);
+                }
+                if (marker != null)
+                    ColMarkers.Add(marker);
+                else
+                    ColMarkers.Add($"x{ColCount}");
+                if (markerDual != null)
+                    ColMarkersDual.Add(markerDual);
+                else
+                    ColMarkersDual.Add($"v{ColCount}*");
             }
             public void InsertRow(List<double> row, int index,  string? marker = null, string? markerDual = null)
             {
