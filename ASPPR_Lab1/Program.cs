@@ -1,8 +1,10 @@
 ﻿using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using ASPPR_Lab1.ASPPR_Lab1;
 using ASPPR_Lab2.Classes.Static;
+using ASPPR_Lab2.Enums;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ASPPR_Lab1
@@ -34,6 +36,7 @@ namespace ASPPR_Lab1
                 6. Викреслити нульові стовпці;
                 7. Розрахувати систему лінійних нерівностей з цілочисельними розв'язками;
                 8. Розв'язати матричну гру з нульовою сумою;
+                9. Розв'язати матричну гру з природою;
                 0. Вихід.
                 """
                );
@@ -135,13 +138,28 @@ namespace ASPPR_Lab1
                                 var tries = InputNumber();
                                 var M = InputMatrix();
                                 var comp = new ComputationReport();
-                                var result = MatrixGameSolver.Solve(M,tries, comp);
+                                var result = MatrixGameSolver.Solve(M, tries, comp);
                                 Console.WriteLine($"Значення гри: \n{result}");
                                 if (result.Model != null)
                                 {
                                     var filePath = WriteToCsv(result.Model);
                                     Console.WriteLine($"Звіт з моделювання гри записано у файл: {filePath}");
                                 }
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(comp.Compile());
+                                break;
+                            }
+                        case 9:
+                            {
+                                var M = InputMatrix();
+                                Console.WriteLine("Введіть коефіцієнт оптимізму для методу Гурвіца (від 0 до 1):");
+                                var coef = InputDouble();
+                                Console.WriteLine("Введіть ймовірності для кожного стовпця матриці, через кому, для критерію Байєса:");
+                                var probabilities = InputRow(M.ColCount);
+                                var comp = new ComputationReport();
+                                var result = MatrixGameSolver.SolveGameWithNature(M, coef, probabilities,comp);
+                                Console.WriteLine($"Результат:\n{result}");
                                 Console.WriteLine("Показати деталі розрахунків?");
                                 var showcompiler = InputBool();
                                 if (showcompiler) Console.WriteLine(comp.Compile());
@@ -204,7 +222,7 @@ namespace ASPPR_Lab1
                 foreach (var number in numbers)
                 {
                     double num;
-                    success = double.TryParse(number, out num);
+                    success = double.TryParse(number, CultureInfo.InvariantCulture, out num);
                     if (!success) break;
                     result.Add(num);
                 }
@@ -227,6 +245,19 @@ namespace ASPPR_Lab1
             {
                 var str = Console.ReadLine();
                 success = int.TryParse(str, out num);
+                if (!success) Console.WriteLine("Некоректний формат!");
+            } while (!success);
+            return num;
+        }
+
+        static double InputDouble()
+        {
+            var success = false;
+            double num;
+            do
+            {
+                var str = Console.ReadLine();
+                success = double.TryParse(str, out num);
                 if (!success) Console.WriteLine("Некоректний формат!");
             } while (!success);
             return num;

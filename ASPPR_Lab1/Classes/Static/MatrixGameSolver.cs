@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ASPPR_Lab1;
 using ASPPR_Lab1.ASPPR_Lab1;
+using ASPPR_Lab2.Enums;
 
 namespace ASPPR_Lab2.Classes.Static
 {
@@ -35,8 +36,8 @@ namespace ASPPR_Lab2.Classes.Static
                 }
                 return new MatrixGameSolution(xSimple, ySimple, vSimple, model);
             }
-            
-            if (matrix.RowCount == 2 || matrix.ColCount ==2)
+
+            if (matrix.RowCount == 2 || matrix.ColCount == 2)
             {
                 return Solve2xN(matrix, compiler);
             }
@@ -126,7 +127,7 @@ namespace ASPPR_Lab2.Classes.Static
         }
 
         internal static MatrixGameSolution Solve2xN(Matrix matrixOr, IComputationReportCompiler? compiler = null)
-         {
+        {
             var X = new List<double>(Enumerable.Repeat(0d, matrixOr.RowCount));
             var Y = new List<double>(Enumerable.Repeat(0d, matrixOr.ColCount));
             var v = 0d;
@@ -165,7 +166,7 @@ namespace ASPPR_Lab2.Classes.Static
             var y2 = solution.Y.Last();
             var unremovedXIndeces = Enumerable.Range(0, matrixOr.RowCount).Where(i => !removedRows.Contains(i)).ToList();
             var unremovedYIndeces = Enumerable.Range(0, matrixOr.ColCount).Where(i => !removedCols.Contains(i)).ToList();
-            X[unremovedXIndeces.First()]= x1;
+            X[unremovedXIndeces.First()] = x1;
             X[unremovedXIndeces.Last()] = x2;
             Y[unremovedYIndeces.First()] = y1;
             Y[unremovedYIndeces.Last()] = y2;
@@ -175,7 +176,7 @@ namespace ASPPR_Lab2.Classes.Static
 
         internal static MatrixGameSolution Solve2x2(Matrix matrix, IComputationReportCompiler? compiler = null)
         {
-            compiler?.AddAction( "Розмірність матриці 2х2. Застосування формул для розв'язання системи з двох рівнянь");
+            compiler?.AddAction("Розмірність матриці 2х2. Застосування формул для розв'язання системи з двох рівнянь");
             var k11 = matrix[0, 0];
             var k12 = matrix[0, 1];
             var k21 = matrix[1, 0];
@@ -193,12 +194,114 @@ namespace ASPPR_Lab2.Classes.Static
             var y1 = ky2 / (ky2 - ky1);
             var y2 = 1 - y1;
 
-            var v = k11*x1 + k21*x2;
-            compiler?.AddAction( "Знайдено розв'язок гри за формулами", $"X: ({x1}; {x2}), Y: ({y1}; {y2}), v: {v}");
+            var v = k11 * x1 + k21 * x2;
+            compiler?.AddAction("Знайдено розв'язок гри за формулами", $"X: ({x1}; {x2}), Y: ({y1}; {y2}), v: {v}");
             var result = new MatrixGameSolution(new List<double>() { x1, x2 }, new List<double>() { y1, y2 }, v);
             return result;
         }
+
+        internal static GameWithNatureSolution SolveGameWithNature(Matrix matrix, double? pessimismCoefficient = null, List<double>? probabilities = null, IComputationReportCompiler? compiler = null)
+        {
+            Dictionary<GameWithNatureAlgorithm, MatrixGameSolution> values = new Dictionary<GameWithNatureAlgorithm, MatrixGameSolution>();
+            values[GameWithNatureAlgorithm.Vald] = SolveVald(matrix, compiler);
+            values[GameWithNatureAlgorithm.Optimistic] = SolveOptimistic(matrix, compiler);
+            if (pessimismCoefficient.HasValue)
+            {
+                values[GameWithNatureAlgorithm.Gurvits] = SolveGurvits(matrix, pessimismCoefficient.Value, compiler);
+            }
+            values[GameWithNatureAlgorithm.Savage] = SolveSavage(matrix, compiler);
+            if (probabilities != null)
+            {
+                values[GameWithNatureAlgorithm.Bayesian] = SolveBayes(matrix, probabilities, compiler);
+            }
+            values[GameWithNatureAlgorithm.Laplace] = SolveLaplace(matrix, compiler);
+            return new GameWithNatureSolution(values);
+        }
+
+        internal static MatrixGameSolution SolveVald(Matrix matrix, IComputationReportCompiler? compiler = null)
+        {
+            var minRows = matrix.Rows.Select((row, index) => (Value: row.Min(), Row: index, Col: row.FindIndex(x => x == row.Min())));
+            var maxMinRows = minRows.GroupBy(x => x.Value).MaxBy(x => x.Key).Select(x => x.Row);
+            compiler?.AddAction("Розв'язок методом Вальдa", $"{string.Join(";\n",minRows.Select(x => $"Мінімальне значення у рядку {x.Row}: {x.Value}"))}");
+            compiler?.AddAction($"Максимальний елемент: {minRows.Select(x => x.Value).Max()}");
+            var probabilityList = new List<double>(Enumerable.Repeat(0d, matrix.RowCount));
+            probabilityList = probabilityList.Select((x, index) => maxMinRows.Contains(index) ? 1d / maxMinRows.Count() : 0).ToList();
+            var solution = new MatrixGameSolution(probabilityList);
+            compiler?.AddAction($"Оптимальні стратегії: ({string.Join(';', solution.X.Select((value, index) => (Value: value, Index: index)).Where(x => Math.Abs(x.Value) > 0.001).Select(x => $"A{x.Index + 1}"))})");
+            return solution;
+        }
+
+        internal static MatrixGameSolution SolveOptimistic(Matrix matrix, IComputationReportCompiler? compiler = null)
+        {
+            var maxRows = matrix.Rows.Select((row, index) => (Value: row.Max(), Row: index, Col: row.FindIndex(x => x == row.Max())));
+            var minMaxRows = maxRows.GroupBy(x => x.Value).MaxBy(x => x.Key).Select(x => x.Row);
+            compiler?.AddAction("Розв'язок оптимістичним методом", $"{string.Join(";\n", maxRows.Select(x => $"Максимальне значення у рядку {x.Row}: {x.Value}"))}");
+            compiler?.AddAction($"Максимальний елемент: {maxRows.Select(x => x.Value).Max()}");
+            var probabilityList = new List<double>(Enumerable.Repeat(0d, matrix.RowCount));
+            probabilityList = probabilityList.Select((x, index) => minMaxRows.Contains(index) ? 1d / maxRows.Count() : 0).ToList();
+            var solution = new MatrixGameSolution(probabilityList);
+            compiler?.AddAction($"Оптимальні стратегії: ({string.Join(';', solution.X.Select((value, index) => (Value: value, Index: index)).Where(x => Math.Abs(x.Value) > 0.001).Select(x => $"A{x.Index + 1}"))})");
+            return solution;
+        }
+
+        internal static MatrixGameSolution SolveGurvits(Matrix matrix, double pessimismCoefficient, IComputationReportCompiler? compiler = null)
+        {
+            var maxInRows = matrix.Rows.Select(row => row.Max()).ToList();
+            var minInRows = matrix.Rows.Select(row => row.Min()).ToList();
+            compiler?.AddAction("Розв'язок методом Гурвіца", $"{string.Join(";\n",maxInRows.Select((value, index) => $"{index}: max = {value}, min = {minInRows[index]}"))}");
+            var gurvitsValues = maxInRows.Select((max, index) => pessimismCoefficient * minInRows[index] + (1 - pessimismCoefficient) * max).ToList();
+            compiler?.AddAction($"{string.Join(";\n", gurvitsValues.Select((value, index) => $"s{index + 1}={value}"))}");
+            var maxGurvits = gurvitsValues.Select((value, index) => (Value: value, Row: index)).GroupBy(x => x.Value).MaxBy(x => x.Key).Select(x => x.Row);
+            compiler?.AddAction($"Максимальний елемент: {gurvitsValues.Max()}");
+            var probabilityList = new List<double>(Enumerable.Repeat(0d, matrix.RowCount));
+            probabilityList = probabilityList.Select((x, index) => maxGurvits.Contains(index) ? 1d / maxGurvits.Count() : 0).ToList();
+            var solution = new MatrixGameSolution(probabilityList);
+            compiler?.AddAction($"Оптимальні стратегії: ({string.Join(';', solution.X.Select((value, index) => (Value: value, Index: index)).Where(x => Math.Abs(x.Value) > 0.001).Select(x => $"A{x.Index + 1}"))})");
+            return solution;
+        }
+
+        internal static MatrixGameSolution SolveSavage(Matrix matrix, IComputationReportCompiler? compiler = null)
+        {
+            var colMaxes = matrix.Columns.Select(col => col.Max()).ToList();
+            var regretMatrix = new Matrix(matrix.RowCount, matrix.ColCount);
+            for (int i = 0; i < matrix.RowCount; i++)
+            {
+                for (int j = 0; j < matrix.ColCount; j++)
+                {
+                    regretMatrix[i, j] = colMaxes[j] - matrix[i, j];
+                }
+            }
+            compiler?.AddAction("Розв'язок методом Савіджа");
+            compiler?.AddMatrix("Матриця ризиків",regretMatrix);
+            compiler?.AddAction($"{string.Join(";\n",regretMatrix.Rows.Select((value, index) => $"max в рядку {index + 1}: {value.Max()}"))}");
+            var minMaxRegret = regretMatrix.Rows.Select(row => row.Max()).Min();
+            compiler?.AddAction($"Мінімальний елемент: {minMaxRegret}");
+            var bestStrategies = Enumerable.Range(0, matrix.RowCount).Where(i => regretMatrix.Rows[i].Max() == minMaxRegret).ToList();
+            var probabilityList = new List<double>(Enumerable.Repeat(0d, matrix.RowCount));
+            probabilityList = probabilityList.Select((x, index) => bestStrategies.Contains(index) ? 1d / bestStrategies.Count() : 0).ToList();
+            var solution = new MatrixGameSolution(probabilityList);
+            compiler?.AddAction($"Оптимальні стратегії: ({string.Join(';', solution.X.Select((value, index) => (Value: value, Index: index)).Where(x => Math.Abs(x.Value) > 0.001).Select(x => $"A{x.Index + 1}"))})");
+            return solution;
+        }
+
+        internal static MatrixGameSolution SolveBayes(Matrix matrix, List<double> probabilities, IComputationReportCompiler? compiler = null)
+        {
+            compiler?.AddAction("Розв'язок методом Байєса",$"Ймовірності застосування природою своїх стратегій: {string.Join("; ",probabilities.Select((value, index) => $"p{index} = {value}"))}");
+            var expectedValues = matrix.Rows.Select(row => row.Select((x,index) => x * probabilities[index]).Sum()).ToList();
+            compiler?.AddAction($"{string.Join(";\n", expectedValues.Select((value, index) => $"s{index} = {value}"))}",$"Максимальний елемент: {expectedValues.Max()}",0);
+            var bestStrategies = expectedValues.Select((value, index) => (Value: value, Row: index)).GroupBy(x => x.Value).MaxBy(x => x.Key).Select(x => x.Row);
+            var probabilityList = new List<double>(Enumerable.Repeat(0d, matrix.RowCount));
+            probabilityList = probabilityList.Select((x, index) => bestStrategies.Contains(index) ? 1d / bestStrategies.Count() : 0).ToList();
+            var solution = new MatrixGameSolution(probabilityList);
+            compiler?.AddAction($"Оптимальні стратегії: ({string.Join(';', solution.X.Select((value, index) => (Value: value, Index: index)).Where(x => Math.Abs(x.Value) > 0.001).Select(x => $"A{x.Index + 1}"))})");
+            return solution;
+        }
+
+        internal static MatrixGameSolution SolveLaplace(Matrix matrix, IComputationReportCompiler? compiler = null)
+        {
+            compiler?.AddAction("Розв'язок методом Лапласа");
+            var probabilities = new List<double>(Enumerable.Repeat(1d / matrix.ColCount, matrix.ColCount));
+            return SolveBayes(matrix, probabilities, compiler);
+        }
     }
-
-
 }
