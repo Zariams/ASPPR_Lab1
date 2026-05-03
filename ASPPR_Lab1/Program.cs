@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using ASPPR_Lab1.ASPPR_Lab1;
+using ASPPR_Lab2.Classes;
 using ASPPR_Lab2.Classes.Static;
 using ASPPR_Lab2.Enums;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -37,6 +38,8 @@ namespace ASPPR_Lab1
                 7. Розрахувати систему лінійних нерівностей з цілочисельними розв'язками;
                 8. Розв'язати матричну гру з нульовою сумою;
                 9. Розв'язати матричну гру з природою;
+                10. Розв'язати транспортну задачу;
+                11. Розв'язати задачу багатокритеріальної оптимізації;
                 0. Вихід.
                 """
                );
@@ -158,7 +161,50 @@ namespace ASPPR_Lab1
                                 Console.WriteLine("Введіть ймовірності для кожного стовпця матриці, через кому, для критерію Байєса:");
                                 var probabilities = InputRow(M.ColCount);
                                 var comp = new ComputationReport();
-                                var result = MatrixGameSolver.SolveGameWithNature(M, coef, probabilities,comp);
+                                var result = MatrixGameSolver.SolveGameWithNature(M, coef, probabilities, comp);
+                                Console.WriteLine($"Результат:\n{result}");
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(comp.Compile());
+                                break;
+                            }
+                        case 10:
+                            {
+                                Console.Write("\nВведіть кількість складів: ");
+                                var rows = InputNumber();
+                                Console.Write("\nВведіть кількість точок збуту: ");
+                                var cols = InputNumber();
+                                Console.WriteLine("Введіть запаси товару на складах:");
+                                var supply = InputRow(rows).Select(s => (int)s).ToList();
+                                Console.WriteLine("Введіть потреби точок збуту:");
+                                var demand = InputRow(cols).Select(d => (int)d).ToList();
+                                Console.WriteLine("Введіть матрицю транспортних витрат:");
+                                var costMatrix = InputMatrix(rows, cols);
+                                var input = new TransportInput(costMatrix, supply, demand);
+                                var comp = new ComputationReport();
+                                Console.WriteLine("Введіть спосіб отримання опорного розв'язку (1 - Пн-Зх кут; 2 - Мінімальної вартості; 3 - Симплекс-методом)");
+                                int methodChoice = InputNumber();
+                                var result = TransportSolver.Solve(input, methodChoice, comp);
+                                Console.WriteLine($"Результат:\n{result}");
+                                Console.WriteLine("Показати деталі розрахунків?");
+                                var showcompiler = InputBool();
+                                if (showcompiler) Console.WriteLine(comp.Compile());
+                                break;
+                            }
+                        case 11:
+                            {
+                                var A = InputInequalitySystem();
+                                Console.Write("\nВведіть кількість критеріїв: ");
+                                var criteria = InputNumber();
+                                var criteriaList = new List<GoalFunction>();
+                                for (int i = 0; i < criteria; i++)
+                                {
+                                    Console.WriteLine($"Введіть цільову функцію для критерію {i + 1}:");
+                                    var Z = InputGoalFunction(A.VariableCount);
+                                    criteriaList.Add(Z);
+                                }
+                                var comp = new ComputationReport();
+                                var result = MulticriteriaSolver.Solve(A, criteriaList, comp);
                                 Console.WriteLine($"Результат:\n{result}");
                                 Console.WriteLine("Показати деталі розрахунків?");
                                 var showcompiler = InputBool();

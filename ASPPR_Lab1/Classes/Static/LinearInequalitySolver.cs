@@ -50,7 +50,7 @@ namespace ASPPR_Lab2.Classes.Static
 
             return solution2;
         }
-        private static InequalitySystemSolution? GetReferenceSolution(Matrix matrix, GoalFunction Z, IComputationReportCompiler? compiler = null, int varCount = 0)
+        public static InequalitySystemSolution? GetReferenceSolution(Matrix matrix, GoalFunction Z, IComputationReportCompiler? compiler = null, int varCount = 0)
         {
             compiler?.AddAction("Пошук опорного розв'язку:", titleLevel: 2);
 
@@ -68,8 +68,9 @@ namespace ASPPR_Lab2.Classes.Static
                 var solutionCols = FindNumberColsInRow(matrix, firstNegNumPos, x => x < 0).Where(col => col != matrix.ColCount - 1);
                 if (!solutionCols.Any())
                 {
-                    success = false;
+                    success = true;
                     compiler?.AddAction("Помилка! Система обмежень є суперечливою!", titleLevel: 1);
+                    break;
                     throw new Exception("Помилка! Система обмежень є суперечливою!");
                 }
                 var firstSolutionCol = solutionCols.First();
@@ -255,11 +256,12 @@ namespace ASPPR_Lab2.Classes.Static
             return solution;
         }
 
-        private static Matrix ConvertInputToMatrix(InequalitySystem A, GoalFunction Z)
+        public static Matrix ConvertInputToMatrix(InequalitySystem A, GoalFunction Z)
         {
             var matrix = A.ConvertToMatrix();
             var zRow = Z.ConvertToMatrix();
             matrix.AddRow(zRow[0],"Z","1");
+            matrix.RowMarkers[matrix.RowCount - 1] = "Z";
             return matrix;
         }
 
@@ -309,11 +311,11 @@ namespace ASPPR_Lab2.Classes.Static
             }
             var solutions = new List<double>(solution2.SolutionCoefficientsDual);
             solutions.Add(1);
-
-            for (int i = dualFormulas.Count-1; i >= 0; i--)
+            var c = Math.Min(solutions.Count-1, dualFormulas.Count);
+            for (int i =c-1; i >= 0; i--)
             {
                 var formula = dualFormulas[i];
-                var l = formula.Count;
+                var l = Math.Min(formula.Count,solutions.Count);
                 var sum = 0d;
                 //Calculate variable value
                 var str = $"U[{i + 1}] = ";

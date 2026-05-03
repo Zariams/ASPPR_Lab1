@@ -411,6 +411,86 @@ namespace ASPPR_Lab1
                 return GetColumn(ColCount - 1);
             }
             
+            public Matrix MultiplyElementwise(Matrix matrix) {
+                if (RowCount != matrix.RowCount || ColCount != matrix.ColCount)
+                    throw new ArgumentException("Matrices must have the same dimensions for element-wise multiplication.");
+                var result = new Matrix(RowCount, ColCount);
+                for (int i = 0; i < RowCount; i++)
+                {
+                    for (int j = 0; j < ColCount; j++)
+                    {
+                        result[i, j] = this[i, j] * matrix[i, j];
+                    }
+                }
+                return result;
+            }
+            public double Sum()
+            {
+                double sum = 0;
+                for (int i = 0; i < RowCount; i++)
+                {
+                    for (int j = 0; j < ColCount; j++)
+                    {
+                        sum += this[i, j];
+                    }
+                }
+                return sum;
+            }
+            public double? GetMinElement(Predicate<double>? pred = null)
+            {
+                double? min = null;
+                for (int i = 0; i < RowCount; i++)
+                {
+                    for (int j = 0; j < ColCount; j++)
+                    {
+                        var v = this[i, j];
+                        if ((min is null || v < min) && (pred?.Invoke(v) ?? true))
+                            min = v;
+                    }
+                }
+                return min;
+            }
+            public double? GetMaxElement(Predicate<double>? pred = null)
+            {
+                double? max = null;
+                for (int i = 0; i < RowCount; i++)
+                {
+                    for (int j = 0; j < ColCount; j++)
+                    {
+                        var v = this[i, j];
+                        if ((max is null || v > max) && (pred?.Invoke(v) ?? true))
+                            max = v;
+                    }
+                }
+                return max;
+            }
+
+            public Matrix TransformElements(Func<double, double> transformFunc)
+            {
+                var result = new Matrix(RowCount, ColCount);
+                for (int i = 0; i < RowCount; i++)
+                {
+                    for (int j = 0; j < ColCount; j++)
+                    {
+                        result[i, j] = transformFunc(this[i, j]);
+                    }
+                }
+                return result;
+            }
+
+            public List<(int, int)> GetMatchingElements(Predicate<double> pred)
+            {
+                var result = new List<(int, int)>();
+                for (int i = 0; i < RowCount; i++)
+                {
+                    for (int j = 0; j < ColCount; j++)
+                    {
+                        if (pred(this[i,j]))
+                            result.Add((i, j));
+                    }
+                }
+                return result;
+            }
             public Matrix DeepCopy()
             {
                 var copy = _data
